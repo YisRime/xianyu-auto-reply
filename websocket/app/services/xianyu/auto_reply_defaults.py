@@ -73,16 +73,6 @@ class AutoReplyDefaultsMixin:
             reply_content = settings.get("reply_content", "")
             reply_image = settings.get("reply_image", "")
 
-            if reply_type == "external_contact":
-                return await self._do_external_contact_default_reply(
-                    session=session,
-                    settings=settings,
-                    settings_item_id=settings_item_id,
-                    chat_id=chat_id,
-                    send_user_id=send_user_id,
-                    reply_trace=reply_trace,
-                )
-
             # API 类型：调用外部接口获取回复内容，失败则不回复
             if reply_type == "api":
                 api_url = settings.get("api_url", "")

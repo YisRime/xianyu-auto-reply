@@ -113,7 +113,7 @@ export function KeywordList({ model }: { model: ReturnType<typeof useKeywordPage
                         >
                           查看大图
                         </button>
-                      ) : keyword.type === 'external_contact' ? (
+                      ) : false ? (
                         <span className="text-sm text-emerald-600 dark:text-emerald-400">站外联系方式</span>
                       ) : (
                         <p className="truncate text-slate-600 dark:text-slate-300" title={keyword.reply}>
@@ -124,7 +124,7 @@ export function KeywordList({ model }: { model: ReturnType<typeof useKeywordPage
                     <td>
                       {keyword.type === 'image' ? (
                         <span className="badge-primary">图片</span>
-                      ) : keyword.type === 'external_contact' ? (
+                      ) : false ? (
                         <span className="badge-primary">站外联系方式</span>
                       ) : (
                         <span className="badge-gray">文本</span>

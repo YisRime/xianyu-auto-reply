@@ -179,7 +179,7 @@ class AutoReplyChatMixin:
                     if pause_manager.is_chat_paused(chat_id, self.cookie_id):
                         logger.info(f"【{self.cookie_id}】自动回复延迟结束，但检测到会话 {chat_id} 已被人工介入暂停，放弃发送回复")
                         log_payload["process_status"] = "skipped"
-                        if isinstance(reply, dict) and reply.get("_reply_mode") in ("external_contact", "api_keyword"):
+                        if isinstance(reply, dict) and reply.get("_reply_mode") == "api_keyword":
                             await self._unmark_chat_processed(chat_id, send_message)
                         log_payload["decision_reason"] = "chat_paused_after_delay"
                         return
@@ -194,46 +194,6 @@ class AutoReplyChatMixin:
                         send_results = await api_handler.run(reply["config"], send_message)
                         if log_payload.get("_api_keyword_error") or log_payload.get("process_status") == "skipped":
                             await self._unmark_chat_processed(chat_id, send_message)
-                    elif isinstance(reply, dict) and reply.get("_reply_mode") == "external_contact":
-                        try:
-                            external_result = await self.xianyu_instance.send_raw_message(
-                                websocket=websocket,
-                                message=reply.get("message"),
-                            )
-                        except Exception as send_exc:  # noqa: BLE001
-                            external_result = {
-                                "success": False,
-                                "mode": "external_contact",
-                                "error_message": str(send_exc),
-                            }
-                        send_results.append(
-                            external_result
-                            or self._build_empty_send_result("external_contact", "remote_location_message")
-                        )
-                        if not external_result or not external_result.get("success"):
-                            await self._unmark_chat_processed(chat_id, send_message)
-                        if (
-                            external_result
-                            and external_result.get("success")
-                            and reply.get("reply_once")
-                            and chat_id
-                        ):
-                            try:
-                                async with async_session_maker() as record_session:
-                                    await self._record_user_replied(
-                                        record_session,
-                                        self.cookie_id,
-                                        chat_id,
-                                        reply.get("settings_item_id"),
-                                    )
-                                logger.info(
-                                    f"【{self.cookie_id}】记录站外联系方式默认回复: "
-                                    f"chat_id={chat_id}, item_id={reply.get('settings_item_id')}"
-                                )
-                            except Exception as record_exc:  # noqa: BLE001
-                                logger.warning(
-                                    f"【{self.cookie_id}】记录站外联系方式 reply_once 失败: {record_exc}"
-                                )
                     elif reply.startswith("__IMAGE_SEND__"):
                         # 解析图片发送指令：去掉前缀后格式为 |类型标识|image_url
                         content = reply.replace("__IMAGE_SEND__", "")

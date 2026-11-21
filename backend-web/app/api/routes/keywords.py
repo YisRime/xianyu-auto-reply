@@ -104,13 +104,6 @@ async def update_single_keyword(
             target_reply=payload.reply,
             target_item_id=payload.item_id,
             target_type=payload.type,
-            location={
-                "location_name": payload.location_name,
-                "location_longitude": payload.location_longitude,
-                "location_latitude": payload.location_latitude,
-                "location_title": payload.location_title,
-                "location_subtitle": payload.location_subtitle,
-            },
         )
     except ValueError as exc:
         return ApiResponse(success=False, message=str(exc))
@@ -139,20 +132,15 @@ async def export_keywords(
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "关键词数据"
-    worksheet.append(["关键词", "商品ID", "关键词内容", "回复类型", "定位名称", "经度", "纬度", "位置标题", "位置副标题"])
+    worksheet.append(["关键词", "商品ID", "关键词内容", "回复类型"])
 
     for kw in keywords:
-        if kw.get("type", "text") in {"text", "external_contact"}:
+        if kw.get("type", "text") == "text":
             worksheet.append([
                 kw["keyword"],
                 kw.get("item_id") or "",
                 kw["reply"],
                 kw.get("type", "text"),
-                kw.get("location_name") or "",
-                kw.get("location_longitude") or "",
-                kw.get("location_latitude") or "",
-                kw.get("location_title") or "",
-                kw.get("location_subtitle") or "",
             ])
 
     output = io.BytesIO()

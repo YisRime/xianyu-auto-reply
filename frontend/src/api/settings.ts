@@ -329,15 +329,6 @@ export interface LocationChatRemoteTestResult {
   }
 }
 
-export const testLocationChatRemoteApi = async (
-  url: string,
-  secretKey: string,
-): Promise<LocationChatRemoteTestResult> => {
-  return post('/api/v1/user-settings/external-api/location-chat/test', {
-    url,
-    secret_key: secretKey,
-  })
-}
 
 
 

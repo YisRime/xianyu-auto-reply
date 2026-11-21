@@ -12,29 +12,19 @@ import { useAuthStore } from '@/store/authStore'
 import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
 import { PageLoading } from '@/components/common/Loading'
 import { ConfirmModal } from '@/components/common/ConfirmModal'
-import LocationContactReplyFields, { DEFAULT_LOCATION_TITLE, type LocationContactReplyValue } from '@/pages/common/LocationContactReplyFields'
-import { getUserSetting } from '@/api/settings'
 import { DeliveryBlockRulesModal } from './DeliveryBlockRulesModal'
 import { RefundCancelModal } from './RefundCancelModal'
 import { AgreeDeliverModal } from './AgreeDeliverModal'
 import type { AccountDetail } from '@/types'
 
 type ModalType = 'qrcode' | 'password' | 'manual' | 'edit' | 'default-reply' | 'ai-settings' | 'proxy-settings' | 'message-expire-time' | 'reply-delay' | 'face-verification' | 'confirm-receipt' | 'auto-rate' | 'delivery-disabled' | 'refund-cancel' | 'agree-deliver' | null
-type DefaultReplyType = 'text' | 'api' | 'external_contact'
+type DefaultReplyType = 'text' | 'api'
 
 const normalizeDefaultReplyType = (replyType: unknown): DefaultReplyType => {
-  if (replyType === 'api' || replyType === 'external_contact') {
+  if (replyType === 'api') {
     return replyType
   }
   return 'text'
-}
-
-const EMPTY_LOCATION_REPLY: LocationContactReplyValue = {
-  location_name: '',
-  location_longitude: '',
-  location_latitude: '',
-  location_title: DEFAULT_LOCATION_TITLE,
-  location_subtitle: '',
 }
 
 interface AccountWithKeywordCount extends AccountDetail {
@@ -142,7 +132,6 @@ export function Accounts() {
   const [defaultReplyType, setDefaultReplyType] = useState<DefaultReplyType>('text')
   const [defaultReplyApiUrl, setDefaultReplyApiUrl] = useState('')
   const [defaultReplyApiTimeout, setDefaultReplyApiTimeout] = useState(80)
-  const [defaultReplyLocation, setDefaultReplyLocation] = useState<LocationContactReplyValue>(EMPTY_LOCATION_REPLY)
   const [defaultReplySaving, setDefaultReplySaving] = useState(false)
   const [defaultReplyImageUploading, setDefaultReplyImageUploading] = useState(false)
   const defaultReplyImageInputRef = useRef<HTMLInputElement>(null)
@@ -1143,7 +1132,6 @@ export function Accounts() {
     setDefaultReplyType('text')
     setDefaultReplyApiUrl('')
     setDefaultReplyApiTimeout(80)
-    setDefaultReplyLocation(EMPTY_LOCATION_REPLY)
     setActiveModal('default-reply')
     
     // 加载当前默认回复
@@ -1156,13 +1144,6 @@ export function Accounts() {
       setDefaultReplyType(normalizeDefaultReplyType(result.reply_type))
       setDefaultReplyApiUrl(result.api_url || '')
       setDefaultReplyApiTimeout(result.api_timeout || 80)
-      setDefaultReplyLocation({
-        location_name: result.location_name || '',
-        location_longitude: result.location_longitude || '',
-        location_latitude: result.location_latitude || '',
-        location_title: result.location_title || DEFAULT_LOCATION_TITLE,
-        location_subtitle: result.location_subtitle || '',
-      })
     } catch {
       // ignore
     }
@@ -1173,23 +1154,6 @@ export function Accounts() {
     if (defaultReplyType === 'api' && !defaultReplyApiUrl.trim()) {
       addToast({ type: 'warning', message: '请输入 API 地址' })
       return
-    }
-    if (defaultReplyType === 'external_contact') {
-      const [remoteUrl, remoteSecret] = await Promise.all([
-        getUserSetting('location_chat.remote_url'),
-        getUserSetting('location_chat.remote_secret_key'),
-      ])
-      if (!remoteUrl.success || !remoteUrl.value?.trim() || !remoteSecret.success || !remoteSecret.value?.trim()) {
-        addToast({ type: 'warning', message: '请先到个人设置的远程URL配置中填写位置聊天远程URL和秘钥' })
-        return
-      }
-      if (!defaultReplyLocation.location_name || !defaultReplyLocation.location_longitude || !defaultReplyLocation.location_latitude) {
-        addToast({ type: 'warning', message: '请选择带经纬度的定位信息' })
-        return
-      }
-      if (!defaultReplyLocation.location_title.trim()) {
-        setDefaultReplyLocation((current) => ({ ...current, location_title: DEFAULT_LOCATION_TITLE }))
-      }
     }
     
     try {
@@ -1202,8 +1166,7 @@ export function Accounts() {
         defaultReplyImage,
         defaultReplyType,
         defaultReplyApiUrl,
-        defaultReplyApiTimeout,
-        { ...defaultReplyLocation, location_title: defaultReplyLocation.location_title.trim() || DEFAULT_LOCATION_TITLE }
+        defaultReplyApiTimeout
       )
       if (result.success) {
         addToast({ type: 'success', message: '默认回复已保存' })
@@ -3351,7 +3314,6 @@ export function Accounts() {
                   {([
                     { value: 'text', label: '默认回复' },
                     { value: 'api', label: 'API接口' },
-                    { value: 'external_contact', label: '站外联系方式' },
                   ] as const).map((opt) => (
                     <button
                       key={opt.value}
@@ -3417,13 +3379,6 @@ export function Accounts() {
                     </p>
                   </div>
                 </>
-              )}
-
-              {defaultReplyType === 'external_contact' && (
-                <LocationContactReplyFields
-                  value={defaultReplyLocation}
-                  onChange={setDefaultReplyLocation}
-                />
               )}
 
               {/* 文本回复内容（API 类型时隐藏） */}

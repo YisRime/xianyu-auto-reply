@@ -82,7 +82,6 @@ class AutoReplyService(
 
     KEYWORD_REPLY_TYPE_PRIORITY = {
         "image": 30,
-        "external_contact": 20,
         "api_keyword": 15,
         "text": 10,
     }

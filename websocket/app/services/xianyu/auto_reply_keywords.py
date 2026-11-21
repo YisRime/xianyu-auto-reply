@@ -110,20 +110,6 @@ class AutoReplyKeywordsMixin:
                                     reply_trace["reply_segments"] = self._build_text_reply_segments(image_reply)
                             return image_reply
 
-                        if kw_type == "external_contact":
-                            external_reply = await self._do_external_contact_default_reply(
-                                session=session,
-                                settings=kw,
-                                settings_item_id=None,
-                                chat_id=chat_id,
-                                send_user_id=send_user_id,
-                                reply_trace=reply_trace,
-                            )
-                            if external_reply:
-                                if reply_trace is not None:
-                                    reply_trace["matched_rule_type"] = "keyword_item_external_contact"
-                                return external_reply
-                            return "EMPTY_REPLY"
                         
                         if not reply or not reply.strip():
                             logger.info(f"商品ID关键词 '{matched_keyword}' 回复内容为空,不进行回复")
@@ -187,20 +173,6 @@ class AutoReplyKeywordsMixin:
                                 reply_trace["reply_segments"] = self._build_text_reply_segments(image_reply)
                         return image_reply
 
-                    if kw_type == "external_contact":
-                        external_reply = await self._do_external_contact_default_reply(
-                            session=session,
-                            settings=kw,
-                            settings_item_id=None,
-                            chat_id=chat_id,
-                            send_user_id=send_user_id,
-                            reply_trace=reply_trace,
-                        )
-                        if external_reply:
-                            if reply_trace is not None:
-                                reply_trace["matched_rule_type"] = "keyword_common_external_contact"
-                            return external_reply
-                        return "EMPTY_REPLY"
 
                     if not reply or not reply.strip():
                         logger.info(f"通用关键词 '{matched_keyword}' 回复内容为空,不进行回复")

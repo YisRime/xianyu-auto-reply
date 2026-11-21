@@ -8,7 +8,15 @@ import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import type { Keyword, Account, Item } from '@/types'
 import { getUserSetting } from '@/api/settings'
-import { DEFAULT_LOCATION_TITLE, type LocationContactReplyValue } from '@/pages/common/LocationContactReplyFields'
+type LocationContactReplyValue = {
+  location_name: string
+  location_longitude: string
+  location_latitude: string
+  location_title: string
+  location_subtitle: string
+}
+
+const DEFAULT_LOCATION_TITLE = ''
 import { useKeywordImageForm } from './useKeywordImageForm'
 import { useKeywordTransfer } from './useKeywordTransfer'
 
@@ -218,13 +226,13 @@ export function useKeywordPage() {
     setFormAccountId(accountId)
     setKeywordText(keyword.keyword)
     setReplyText(keyword.reply)
-    setReplyType(keyword.type === 'external_contact' ? 'external_contact' : 'text')
+    setReplyType('text')
     setLocation({
-      location_name: keyword.location_name || '',
-      location_longitude: keyword.location_longitude || '',
-      location_latitude: keyword.location_latitude || '',
-      location_title: keyword.location_title || DEFAULT_LOCATION_TITLE,
-      location_subtitle: keyword.location_subtitle || '',
+      location_name: (keyword as unknown as LocationContactReplyValue).location_name || '',
+      location_longitude: (keyword as unknown as LocationContactReplyValue).location_longitude || '',
+      location_latitude: (keyword as unknown as LocationContactReplyValue).location_latitude || '',
+      location_title: (keyword as unknown as LocationContactReplyValue).location_title || DEFAULT_LOCATION_TITLE,
+      location_subtitle: (keyword as unknown as LocationContactReplyValue).location_subtitle || '',
     })
     setItemIdText(keyword.item_id || '')
     setIsModalOpen(true)
@@ -294,9 +302,7 @@ export function useKeywordPage() {
             keyword: normalizedKeywordText,
             reply: replyText.trim(),
             item_id: itemIdText.trim(),
-            type: replyType,
-            ...location,
-            location_title: location.location_title.trim() || DEFAULT_LOCATION_TITLE,
+            type: 'text' as const,
           }
         )
         if (result.success === false) {

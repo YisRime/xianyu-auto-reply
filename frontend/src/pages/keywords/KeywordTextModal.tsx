@@ -1,11 +1,10 @@
 /** 文本与站外联系方式关键词的新增和编辑弹窗。 */
 import { KeywordItemSelector } from './KeywordItemSelector'
 import { Select } from '@/components/common/Select'
-import LocationContactReplyFields from '@/pages/common/LocationContactReplyFields'
 import type { useKeywordPage } from './useKeywordPage'
 
 export function KeywordTextModal({ model }: { model: ReturnType<typeof useKeywordPage> }) {
-  const { accounts, items, selectedAccount, formAccountId, setFormAccountId, isModalOpen, setIsModalOpen, editingKeyword, keywordText, setKeywordText, replyText, setReplyText, replyType, setReplyType, location, setLocation, itemIdText, setItemIdText, selectedItemIds, setSelectedItemIds, itemSearchText, setItemSearchText, saving, handleSubmit } = model
+  const { accounts, items, selectedAccount, formAccountId, setFormAccountId, isModalOpen, setIsModalOpen, editingKeyword, keywordText, setKeywordText, replyText, setReplyText, replyType, setReplyType, itemIdText, setItemIdText, selectedItemIds, setSelectedItemIds, itemSearchText, setItemSearchText, saving, handleSubmit } = model
   return <>
       {isModalOpen && (
         <div className="modal-overlay">
@@ -77,15 +76,14 @@ export function KeywordTextModal({ model }: { model: ReturnType<typeof useKeywor
                   <label className="input-label">回复类型</label>
                   <select
                     value={replyType}
-                    onChange={(e) => setReplyType(e.target.value as 'text' | 'external_contact')}
+                    onChange={() => setReplyType('text')}
                     className="input-ios"
                   >
                     <option value="text">文本回复</option>
-                    <option value="external_contact">站外联系方式</option>
                   </select>
                 </div>
                 {replyType === 'external_contact' ? (
-                  <LocationContactReplyFields value={location} onChange={setLocation} />
+                  <></>
                 ) : (
                   <div>
                     <label className="input-label">回复内容</label>

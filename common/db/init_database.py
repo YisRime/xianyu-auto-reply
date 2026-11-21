@@ -589,11 +589,6 @@ class DatabaseInitializer:
                 reply_content TEXT COMMENT '回复内容',
                 reply_type VARCHAR(32) COMMENT '回复类型(text/image/external_contact)',
                 image_url VARCHAR(512) COMMENT '图片URL',
-                location_name VARCHAR(255) COMMENT '站外联系方式定位名称',
-                location_longitude VARCHAR(32) COMMENT '站外联系方式经度',
-                location_latitude VARCHAR(32) COMMENT '站外联系方式纬度',
-                location_title VARCHAR(128) COMMENT '站外联系方式位置标题',
-                location_subtitle VARCHAR(255) COMMENT '站外联系方式位置副标题',
                 item_id VARCHAR(64) COMMENT '商品ID',
                 priority INT DEFAULT 100 COMMENT '优先级',
                 is_active TINYINT(1) DEFAULT 1 COMMENT '是否启用',
@@ -718,11 +713,6 @@ class DatabaseInitializer:
                 reply_image VARCHAR(512) COMMENT '回复图片URL',
                 api_url VARCHAR(1024) DEFAULT NULL COMMENT 'API地址(reply_type=api时POST此地址)',
                 api_timeout INT DEFAULT 80 COMMENT 'API请求超时时间(秒)',
-                location_name VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式定位名称',
-                location_longitude VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式经度',
-                location_latitude VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式纬度',
-                location_title VARCHAR(128) DEFAULT NULL COMMENT '站外联系方式位置标题',
-                location_subtitle VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式位置副标题',
                 reply_once TINYINT(1) DEFAULT 0 COMMENT '只回复一次',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -1922,11 +1912,6 @@ class DatabaseInitializer:
     # 字段迁移定义：表名 -> [(字段名, 字段定义, 在哪个字段后面)]
     COLUMN_MIGRATIONS = {
         "xy_keyword_rules": [
-            ("location_name", "VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式定位名称'", "image_url"),
-            ("location_longitude", "VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式经度'", "location_name"),
-            ("location_latitude", "VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式纬度'", "location_longitude"),
-            ("location_title", "VARCHAR(128) DEFAULT NULL COMMENT '站外联系方式位置标题'", "location_latitude"),
-            ("location_subtitle", "VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式位置副标题'", "location_title"),
         ],
         "xy_token_cache": [
             ("renew_expire_at", "DATETIME DEFAULT NULL COMMENT '续期Token过期时间'", "expire_at"),
@@ -2112,11 +2097,6 @@ class DatabaseInitializer:
             ("reply_type", "VARCHAR(32) DEFAULT 'text' COMMENT '回复类型：text-文本，api-接口，external_contact-站外联系方式'", "enabled"),
             ("api_url", "VARCHAR(1024) DEFAULT NULL COMMENT 'API地址(reply_type=api时POST此地址)'", "reply_image"),
             ("api_timeout", "INT DEFAULT 80 COMMENT 'API请求超时时间(秒)'", "api_url"),
-            ("location_name", "VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式定位名称'", "api_timeout"),
-            ("location_longitude", "VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式经度'", "location_name"),
-            ("location_latitude", "VARCHAR(32) DEFAULT NULL COMMENT '站外联系方式纬度'", "location_longitude"),
-            ("location_title", "VARCHAR(128) DEFAULT NULL COMMENT '站外联系方式位置标题'", "location_latitude"),
-            ("location_subtitle", "VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式位置副标题'", "location_title"),
         ],
         "xy_default_reply_records": [
             ("item_id", "VARCHAR(64) DEFAULT NULL COMMENT '商品ID'", "account_id"),

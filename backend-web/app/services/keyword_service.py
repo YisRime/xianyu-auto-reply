@@ -20,7 +20,6 @@ from common.models.xy_account import XYAccount
 from common.models.xy_catalog_item import XYCatalogItem
 from common.models.xy_keyword_rule import XYKeywordRule
 from common.models.user_setting import UserSetting
-from common.utils.default_reply_location import validate_external_contact_fields
 
 
 class KeywordService:
@@ -40,33 +39,10 @@ class KeywordService:
         item_key = (item_id or "").lower()
         return {(line.lower(), item_key) for line in KeywordService._split_keyword_lines(keyword_text)}
 
-    async def _validate_external_contact(self, account: XYAccount, entry: dict) -> None:
-        settings_result = await self.session.execute(
-            select(UserSetting.key, UserSetting.value).where(
-                UserSetting.user_id == account.owner_id,
-                UserSetting.key.in_(('location_chat.remote_url', 'location_chat.remote_secret_key')),
-            )
-        )
-        settings = {str(key): str(value or '').strip() for key, value in settings_result.all()}
-        remote_url = settings.get('location_chat.remote_url', '')
-        remote_secret_key = settings.get('location_chat.remote_secret_key', '')
-        if not remote_url or not remote_secret_key:
-            raise ValueError('请先到个人设置的远程URL配置中填写位置聊天配置的远程URL和秘钥')
-        error = validate_external_contact_fields(
-            remote_url=remote_url,
-            location_name=str(entry.get('location_name') or '').strip(),
-            longitude=str(entry.get('location_longitude') or '').strip(),
-            latitude=str(entry.get('location_latitude') or '').strip(),
-            title=str(entry.get('location_title') or '').strip(),
-            subtitle=str(entry.get('location_subtitle') or '').strip(),
-        )
-        if error:
-            raise ValueError(error)
-
     @staticmethod
     def _rule_type(value: str | None) -> str:
         normalized = (value or 'text').strip().lower()
-        return normalized if normalized in {'text', 'image', 'external_contact'} else 'text'
+        return normalized if normalized in {'text', 'image'} else 'text'
 
     @staticmethod
     def _location_values(rule_or_entry) -> dict[str, str]:
@@ -106,7 +82,6 @@ class KeywordService:
                     "image_url": rule.image_url or "",
                     "item_title": item_title or "",
                     "account_id": account_id or "",
-                    **self._location_values(rule),
                 }
             )
         return keywords
@@ -138,7 +113,6 @@ class KeywordService:
                     "type": rule_type,
                     "image_url": rule.image_url or "",
                     "item_title": item_title or "",
-                    **self._location_values(rule),
                 }
             )
         return keywords
@@ -154,8 +128,6 @@ class KeywordService:
             reply_type = self._rule_type(entry.get('type') or entry.get('reply_type'))
             if reply_type == 'image':
                 raise ValueError('图片关键词不支持通过文本关键词接口保存')
-            if reply_type == 'external_contact':
-                reply = ''
             keyword_lines = self._split_keyword_lines(keyword)
             if not keyword_lines:
                 raise ValueError("关键词不能为空")
@@ -167,18 +139,12 @@ class KeywordService:
                         raise ValueError(f"关键词 '{keyword_line}'（商品ID: {item_id}） 在当前提交中重复")
                     raise ValueError(f"关键词 '{keyword_line}'（通用关键词） 在当前提交中重复")
                 seen.add(key)
-            location_values = self._location_values(entry) if reply_type == 'external_contact' else {
-                key: '' for key in ('location_name', 'location_longitude', 'location_latitude', 'location_title', 'location_subtitle')
-            }
             normalized_entry = {
                 'keyword': keyword,
                 'reply': reply,
                 'item_id': item_id,
                 'type': reply_type,
-                **location_values,
             }
-            if reply_type == 'external_contact':
-                await self._validate_external_contact(account, normalized_entry)
             normalized_entries.append(normalized_entry)
 
         # Check for conflicts with image keywords
@@ -254,17 +220,6 @@ class KeywordService:
         normalized_target_reply = (target_reply or "").strip()
         normalized_target_item_id = (target_item_id or "").strip() or None
         normalized_target_type = self._rule_type(target_type)
-        if normalized_target_type == 'external_contact':
-            normalized_target_reply = ''
-        normalized_location = {
-            key: str((location or {}).get(key) or '').strip()
-            for key in ('location_name', 'location_longitude', 'location_latitude', 'location_title', 'location_subtitle')
-        }
-        if normalized_target_type == 'external_contact':
-            await self._validate_external_contact(target_account, normalized_location)
-        else:
-            normalized_location = {key: '' for key in normalized_location}
-
         if not normalized_target_keywords:
             raise ValueError("关键词不能为空")
 
@@ -326,11 +281,6 @@ class KeywordService:
         existing_rule.reply_type = normalized_target_type.upper()
         existing_rule.item_id = normalized_target_item_id
         existing_rule.image_url = None
-        existing_rule.location_name = normalized_location['location_name'] or None
-        existing_rule.location_longitude = normalized_location['location_longitude'] or None
-        existing_rule.location_latitude = normalized_location['location_latitude'] or None
-        existing_rule.location_title = normalized_location['location_title'] or None
-        existing_rule.location_subtitle = normalized_location['location_subtitle'] or None
         existing_rule.updated_at = timestamp
 
         await self.session.commit()

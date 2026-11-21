@@ -46,7 +46,6 @@ const routeTitles: Record<string, string> = {
   '/online-chat-new': '在线聊天',
   '/feedback': '意见反馈',
   '/ad-apply': '广告申请',
-  '/disclaimer': '免责声明',
   '/tutorial': '使用教程',
   '/admin/users': '用户管理',
   '/admin/logs': '系统日志',

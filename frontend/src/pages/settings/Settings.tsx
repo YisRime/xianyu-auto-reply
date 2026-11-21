@@ -10,7 +10,6 @@ import {
   buildHiddenMenuSettingsPayload,
   getHiddenMenuKeysFromSettings,
   getSystemSettings,
-  normalizeDisclaimerSettings,
   normalizeLoginBrandingSettings,
   testEmailSend,
 } from '@/api/settings'
@@ -25,7 +24,6 @@ import {
   normalizeThemeFontSettings,
 } from '@/utils/theme'
 import type {
-  DisclaimerSettings,
   LoginBrandingSettings,
   SystemSettings,
   ThemeAppearanceSettings,
@@ -134,7 +132,6 @@ export function Settings() {
   const themeAppearance = normalizeThemeAppearanceSettings(settings)
   const themeFont = normalizeThemeFontSettings(settings)
   const loginBranding = normalizeLoginBrandingSettings(settings)
-  const disclaimer = normalizeDisclaimerSettings(settings)
 
   return (
     <div className="space-y-4">
@@ -171,19 +168,15 @@ export function Settings() {
         themeAppearanceSettings={themeAppearance}
         themeFontSettings={themeFont}
         loginBrandingSettings={loginBranding}
-        disclaimerSettings={disclaimer}
         themeAppearanceSaving={actions.saving('themeAppearance')}
         themeFontSaving={actions.saving('themeFont')}
         loginBrandingSaving={actions.saving('branding')}
-        disclaimerSaving={actions.saving('disclaimer')}
         onThemeAppearanceChange={handleThemeAppearanceChange}
         onThemeAppearanceSave={() => void actions.saveThemeAppearance(themeAppearance)}
         onThemeFontChange={handleThemeFontChange}
         onThemeFontSave={() => void actions.saveThemeFont(themeFont)}
         onLoginBrandingChange={(key: keyof LoginBrandingSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
         onLoginBrandingSave={() => void actions.saveLoginBranding(loginBranding)}
-        onDisclaimerChange={(key: keyof DisclaimerSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
-        onDisclaimerSave={() => void actions.saveDisclaimer(disclaimer)}
       />}
 
       {activeTab === 'payment' && <PaymentSettingsTab

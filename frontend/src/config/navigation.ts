@@ -1,6 +1,5 @@
 import type React from 'react'
 import {
-  AlertTriangle,
   Ban,
   BarChart3,
   Bell,
@@ -150,7 +149,6 @@ export const adminNavItems: NavEntry[] = [
 ]
 
 export const bottomNavItems: NavItem[] = [
-  { key: 'disclaimer', icon: AlertTriangle, label: '免责声明', path: '/disclaimer' },
   { key: 'about', icon: Info, label: '关于', path: '/about' },
 ]
 

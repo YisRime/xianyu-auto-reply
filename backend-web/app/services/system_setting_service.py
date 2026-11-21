@@ -37,21 +37,6 @@ SENSITIVE_KEYS = {
     "security.jwt_secret_key",
 }
 
-DEFAULT_DISCLAIMER_CONTENT = (
-    "数据存储说明\n"
-    "1. 本系统在运行过程中，为保障服务正常运行，会存储用户账号密码、登录 Cookie、商品信息、卡券信息等业务数据。\n"
-    "2. 上述数据仅用于系统功能运行、自动化处理和业务管理，不作为其他用途。\n"
-    "3. 请您自行确认服务器环境、账号权限和数据保管措施的安全性。\n\n"
-    "用户须知\n"
-    "1. 用户应确保使用本系统的行为符合相关平台规则和法律法规。\n"
-    "2. 因用户自身违规操作、账号共享、密码泄露、服务器安全问题导致的损失，由用户自行承担。\n"
-    "3. 建议用户定期备份重要数据，因系统故障、第三方平台变更、不可抗力等导致的异常或损失，本系统不承担责任。\n"
-    "4. 本系统依赖第三方平台接口和网络环境，无法保证服务始终连续、稳定、无中断。\n\n"
-    "隐私与风险提示\n"
-    "1. 请勿在未充分评估风险的情况下接入生产环境或敏感账号。\n"
-    "2. 使用本系统即表示您已充分理解并接受相关风险，并愿意自行承担相应责任。"
-)
-
 DEFAULT_LOGIN_SYSTEM_TITLE = "高效专业的\n闲鱼自动化管理平台"
 DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题"
 
@@ -59,11 +44,6 @@ DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理�
 DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     **EMAIL_DOMAIN_DEFAULTS,
     **PAYMENT_SETTING_DEFAULTS,
-    "disclaimer.title": ("免责声明", "系统免责声明标题"),
-    "disclaimer.content": (DEFAULT_DISCLAIMER_CONTENT, "系统免责声明正文"),
-    "disclaimer.checkbox_text": ("我已阅读并同意以上免责声明", "免责声明勾选提示文案"),
-    "disclaimer.agree_button_text": ("同意并继续", "免责声明同意按钮文案"),
-    "disclaimer.disagree_button_text": ("不同意", "免责声明不同意按钮文案"),
     REGISTRATION_ENABLED_KEY: ("false", "是否允许新用户自助注册（关闭后拒绝注册及注册验证码发送、验证）"),
     "login.system_name": ("闲鱼管理系统", "登录页系统名称"),
     "login.system_title": (DEFAULT_LOGIN_SYSTEM_TITLE, "登录页系统标题"),
@@ -110,11 +90,6 @@ NO_ESCAPE_KEYS = {
     REGISTRATION_ENABLED_KEY,
     "show_default_login_info",
     "login_captcha_enabled",
-    "disclaimer.title",
-    "disclaimer.content",
-    "disclaimer.checkbox_text",
-    "disclaimer.agree_button_text",
-    "disclaimer.disagree_button_text",
     "login.system_name",
     "login.system_title",
     "login.system_description",

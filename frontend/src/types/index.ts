@@ -237,14 +237,6 @@ export interface MessageNotification {
 }
 
 // 系统设置相关类型
-export interface DisclaimerSettings {
-  'disclaimer.title': string
-  'disclaimer.content': string
-  'disclaimer.checkbox_text': string
-  'disclaimer.agree_button_text': string
-  'disclaimer.disagree_button_text': string
-}
-
 export interface LoginBrandingSettings {
   'login.system_name': string
   'login.system_title': string

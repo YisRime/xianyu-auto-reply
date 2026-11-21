@@ -1,7 +1,6 @@
 import { get, post, put } from '@/utils/request'
 import type {
   ApiResponse,
-  DisclaimerSettings,
   LoginBrandingSettings,
   SystemSettings,
   ThemeAppearanceSettings,
@@ -26,27 +25,11 @@ const AI_SETTINGS_PREFIX = '/api/v1/ai-reply-settings'
 const ADMIN_PREFIX = '/api/v1/admin'
 const USERS_PREFIX = '/api/v1/users'
 const MENU_HIDDEN_SETTING_KEY = 'navigation.hidden_menu_keys'
-const DEFAULT_DISCLAIMER_SETTINGS: DisclaimerSettings = {
-  'disclaimer.title': '免责声明',
-  'disclaimer.content': '数据存储说明\n1. 本系统在运行过程中，为保障服务正常运行，会存储用户账号密码、登录 Cookie、商品信息、卡券信息等业务数据。\n2. 上述数据仅用于系统功能运行、自动化处理和业务管理，不作为其他用途。\n3. 请您自行确认服务器环境、账号权限和数据保管措施的安全性。\n\n用户须知\n1. 用户应确保使用本系统的行为符合相关平台规则和法律法规。\n2. 因用户自身违规操作、账号共享、密码泄露、服务器安全问题导致的损失，由用户自行承担。\n3. 建议用户定期备份重要数据，因系统故障、第三方平台变更、不可抗力等导致的异常或损失，本系统不承担责任。\n4. 本系统依赖第三方平台接口和网络环境，无法保证服务始终连续、稳定、无中断。\n\n隐私与风险提示\n1. 请勿在未充分评估风险的情况下接入生产环境或敏感账号。\n2. 使用本系统即表示您已充分理解并接受相关风险，并愿意自行承担相应责任。',
-  'disclaimer.checkbox_text': '我已阅读并同意以上免责声明',
-  'disclaimer.agree_button_text': '同意并继续',
-  'disclaimer.disagree_button_text': '不同意',
-}
-
 const DEFAULT_LOGIN_BRANDING_SETTINGS: LoginBrandingSettings = {
   'login.system_name': '闲鱼管理系统',
   'login.system_title': '高效专业的\n闲鱼自动化管理平台',
   'login.system_description': '自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题',
 }
-
-const DISCLAIMER_SETTING_KEYS: Array<keyof DisclaimerSettings> = [
-  'disclaimer.title',
-  'disclaimer.content',
-  'disclaimer.checkbox_text',
-  'disclaimer.agree_button_text',
-  'disclaimer.disagree_button_text',
-]
 
 const LOGIN_BRANDING_SETTING_KEYS: Array<keyof LoginBrandingSettings> = [
   'login.system_name',
@@ -79,30 +62,6 @@ export const getSystemSettings = async (): Promise<{ success: boolean; data?: Sy
 export const getPublicSystemSettings = async (): Promise<{ success: boolean; data?: SystemSettings }> => {
   const data = await get<Record<string, unknown>>(PUBLIC_SYSTEM_SETTINGS_PREFIX)
   return { success: true, data: convertSystemSettings(data) }
-}
-
-export const getDefaultDisclaimerSettings = (): DisclaimerSettings => ({ ...DEFAULT_DISCLAIMER_SETTINGS })
-
-export const normalizeDisclaimerSettings = (settings?: Partial<SystemSettings> | null): DisclaimerSettings => {
-  return {
-    'disclaimer.title': String(settings?.['disclaimer.title'] ?? DEFAULT_DISCLAIMER_SETTINGS['disclaimer.title']),
-    'disclaimer.content': String(settings?.['disclaimer.content'] ?? DEFAULT_DISCLAIMER_SETTINGS['disclaimer.content']),
-    'disclaimer.checkbox_text': String(settings?.['disclaimer.checkbox_text'] ?? DEFAULT_DISCLAIMER_SETTINGS['disclaimer.checkbox_text']),
-    'disclaimer.agree_button_text': String(settings?.['disclaimer.agree_button_text'] ?? DEFAULT_DISCLAIMER_SETTINGS['disclaimer.agree_button_text']),
-    'disclaimer.disagree_button_text': String(settings?.['disclaimer.disagree_button_text'] ?? DEFAULT_DISCLAIMER_SETTINGS['disclaimer.disagree_button_text']),
-  }
-}
-
-export const buildDisclaimerSettingsPayload = (settings?: Partial<SystemSettings> | null): DisclaimerSettings => {
-  const normalized = normalizeDisclaimerSettings(settings)
-  return DISCLAIMER_SETTING_KEYS.reduce((payload, key) => {
-    payload[key] = normalized[key]
-    return payload
-  }, {} as DisclaimerSettings)
-}
-
-export const updateDisclaimerSettings = async (settings?: Partial<SystemSettings> | null): Promise<ApiResponse> => {
-  return updateSystemSettings(buildDisclaimerSettingsPayload(settings) as Partial<SystemSettings>)
 }
 
 export const getDefaultLoginBrandingSettings = (): LoginBrandingSettings => ({ ...DEFAULT_LOGIN_BRANDING_SETTINGS })

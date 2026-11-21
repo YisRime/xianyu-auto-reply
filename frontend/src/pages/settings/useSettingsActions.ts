@@ -7,7 +7,6 @@ import { useCallback, useState } from 'react'
 import {
   buildHiddenMenuSettingsPayload,
   getHiddenMenuKeysFromSettings,
-  updateDisclaimerSettings,
   updateDistributionSettings,
   updateLoginBrandingSettings,
   updateProxySettings,
@@ -20,7 +19,6 @@ import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { isValidEmail } from '@/utils/email'
 import type {
-  DisclaimerSettings,
   LoginBrandingSettings,
   PaymentChannel,
   SystemSettings,
@@ -224,7 +222,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     saveProxy,
     saveHiddenMenus,
     saveLoginBranding: (settings: LoginBrandingSettings) => saveSpecial('branding', () => updateLoginBrandingSettings({ ...settings }), '登录品牌设置保存成功', '登录品牌设置保存失败'),
-    saveDisclaimer: (settings: DisclaimerSettings) => saveSpecial('disclaimer', () => updateDisclaimerSettings({ ...settings }), '免责声明保存成功', '免责声明保存失败'),
     saveThemeAppearance: (settings: ThemeAppearanceSettings) => saveSpecial('themeAppearance', () => updateThemeAppearanceSettings({ ...settings }), '主题外观保存成功', '主题外观保存失败'),
     saveThemeFont: (settings: ThemeFontSettings) => saveSpecial('themeFont', () => updateThemeFontSettings({ ...settings }), '主题字体保存成功', '主题字体保存失败'),
   }

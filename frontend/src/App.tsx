@@ -3,13 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore } from '@/store/authStore'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Toast } from '@/components/common/Toast'
-import { DisclaimerModal } from '@/components/common/DisclaimerModal'
 import { verifyToken } from '@/api/auth'
-import { getHiddenMenuKeysFromSettings, getPublicSystemSettings, getSystemSettings, getUserSetting, normalizeDisclaimerSettings, updateUserSetting } from '@/api/settings'
+import { getHiddenMenuKeysFromSettings, getPublicSystemSettings, getSystemSettings } from '@/api/settings'
 import { getMenuAccessFallbackPath, isPathBlockedForUser } from '@/config/navigation'
 import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
 import { applyThemeSettings, initializeThemeMode } from '@/utils/theme'
-import type { DisclaimerSettings } from '@/types'
 
 // 登录/注册/激活码页面保持同步导入（首屏必需）
 import { Login } from '@/pages/auth/Login'
@@ -30,7 +28,6 @@ const Orders = React.lazy(() => import('@/pages/orders/Orders').then(m => ({ def
 const Keywords = React.lazy(() => import('@/pages/keywords/Keywords').then(m => ({ default: m.Keywords })))
 const About = React.lazy(() => import('@/pages/about/About').then(m => ({ default: m.About })))
 const PublicAbout = React.lazy(() => import('@/pages/about/PublicAbout').then(m => ({ default: m.PublicAbout })))
-const Disclaimer = React.lazy(() => import('@/pages/disclaimer/Disclaimer').then(m => ({ default: m.Disclaimer })))
 const NotificationChannels = React.lazy(() => import('@/pages/notifications/NotificationChannels').then(m => ({ default: m.NotificationChannels })))
 const MessageNotifications = React.lazy(() => import('@/pages/notifications/MessageNotifications').then(m => ({ default: m.MessageNotifications })))
 const Settings = React.lazy(() => import('@/pages/settings/Settings').then(m => ({ default: m.Settings })))
@@ -104,7 +101,6 @@ function PageLoading() {
 }
 
 // 免责声明同意状态的 key
-const DISCLAIMER_AGREED_KEY = 'disclaimer_agreed'
 
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -112,10 +108,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { hiddenMenuKeys, isExeMode, setHiddenMenuKeys, setIsExeMode } = useMenuVisibilityStore()
   const location = useLocation()
   const [authState, setAuthState] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking')
-  const [disclaimerState, setDisclaimerState] = useState<'checking' | 'agreed' | 'pending'>('checking')
   const [menuState, setMenuState] = useState<'checking' | 'ready'>('checking')
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
-  const [disclaimerSettings, setDisclaimerSettings] = useState<DisclaimerSettings>(() => normalizeDisclaimerSettings())
   const checkingRef = useRef(false)
 
   useEffect(() => {
@@ -155,35 +148,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
           })
           setAuthState('authenticated')
           
-          // 检查免责声明同意状态
-          try {
-            const settingResult = await getUserSetting(DISCLAIMER_AGREED_KEY)
-            if (settingResult.success && settingResult.value === 'true') {
-              setDisclaimerState('agreed')
-            } else {
-              setDisclaimerState('pending')
-              setShowDisclaimer(true)
-            }
-          } catch {
-            // 设置不存在，需要显示免责声明
-            setDisclaimerState('pending')
-            setShowDisclaimer(true)
-          }
-
           try {
             const settingsResult = await getSystemSettings()
             if (settingsResult.success && settingsResult.data) {
               applyThemeSettings(settingsResult.data)
-              setDisclaimerSettings(normalizeDisclaimerSettings(settingsResult.data))
               setIsExeMode(Boolean(settingsResult.data['runtime.is_exe_mode']))
               setHiddenMenuKeys(getHiddenMenuKeysFromSettings(settingsResult.data))
             } else {
-              setDisclaimerSettings(normalizeDisclaimerSettings())
               setIsExeMode(false)
               setHiddenMenuKeys([])
             }
           } catch {
-            setDisclaimerSettings(normalizeDisclaimerSettings())
             setIsExeMode(false)
             setHiddenMenuKeys([])
           } finally {
@@ -207,24 +182,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [_hasHydrated, isAuthenticated, storeToken, setAuth, clearAuth, setHiddenMenuKeys, setIsExeMode])
 
   // 同意免责声明
-  const handleAgreeDisclaimer = async () => {
-    try {
-      await updateUserSetting(DISCLAIMER_AGREED_KEY, 'true', '用户已同意免责声明')
-      setDisclaimerState('agreed')
-      setShowDisclaimer(false)
-    } catch {
-      // 保存失败也允许继续使用
-      setDisclaimerState('agreed')
-      setShowDisclaimer(false)
-    }
-  }
 
   // 不同意免责声明
-  const handleDisagreeDisclaimer = () => {
-    clearAuth()
-    setAuthState('unauthenticated')
-    setShowDisclaimer(false)
-  }
 
   // 等待 hydration 或检查完成
   if (!_hasHydrated || authState === 'checking' || menuState === 'checking') {
@@ -237,30 +196,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (authState === 'unauthenticated') {
     return <Navigate to="/login" replace />
-  }
-
-  // 未同意免责声明时显示弹窗，阻止使用系统
-  if (disclaimerState === 'pending' || showDisclaimer) {
-    return (
-      <>
-        <DisclaimerModal
-          isOpen={showDisclaimer}
-          settings={disclaimerSettings}
-          onAgree={handleAgreeDisclaimer}
-          onDisagree={handleDisagreeDisclaimer}
-        />
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900" />
-      </>
-    )
-  }
-
-  // 还在检查免责声明状态
-  if (disclaimerState === 'checking') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    )
   }
 
   if (isPathBlockedForUser(location.pathname, hiddenMenuKeys, Boolean(user?.is_admin), isExeMode)) {
@@ -368,7 +303,6 @@ function App() {
             <Route path="settings" element={<Settings />} />
             {/* 共享多人扫码登录管理端 */}
             <Route path="shared-scan" element={<Navigate to="/accounts/shared-scan" replace />} />
-            <Route path="disclaimer" element={<Disclaimer />} />
             <Route path="about" element={<About />} />
 
             {/* Admin routes */}

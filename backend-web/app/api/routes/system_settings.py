@@ -22,13 +22,8 @@ from app.services.system_settings_update_service import validate_system_settings
 from common.models.user import User, UserRole
 from common.schemas.common import ApiResponse
 from common.schemas.system_setting import (
-    RemotePasswordLoginTestRequest,
     SystemSettingsBatchUpdate,
     SystemSettingUpdate,
-)
-from common.services.remote_password_login_api import (
-    test_remote_password_login_interface,
-    validate_remote_password_login_settings,
 )
 from common.utils.browser_utils import is_frozen
 from common.utils.http_utils import get_client_ip
@@ -204,34 +199,3 @@ async def test_email_send(
     return ApiResponse(success=success, code=200 if success else 40001, message=message)
 
 
-@router.post("/test-password-login-remote", response_model=ApiResponse)
-async def test_password_login_remote_interface(
-    payload: RemotePasswordLoginTestRequest,
-    current_user: User = Depends(deps.get_current_admin_user),  # noqa: B008
-) -> ApiResponse:
-    """测试协议登录远程接口（阿里滑块获取 x5sec）连通性与秘钥有效性。"""
-    error_message = validate_remote_password_login_settings(
-        payload.remote_url,
-        payload.remote_secret_key,
-    )
-    if error_message:
-        return ApiResponse(success=False, code=40001, message=error_message)
-
-    try:
-        result = await test_remote_password_login_interface(
-            payload.remote_url,
-            payload.remote_secret_key,
-            timeout_seconds=15,
-        )
-    except Exception as exc:  # noqa: BLE001 - 远程测试入口必须将所有上游异常转换为可见业务错误。
-        logger.error(f"测试协议登录远程接口异常: {type(exc).__name__}: {exc}")
-        return ApiResponse(
-            success=False,
-            message=f"远程接口测试失败：{type(exc).__name__}: {exc}",
-        )
-
-    return ApiResponse(
-        success=result.success,
-        code=200 if result.success else 40001,
-        message=result.message,
-    )

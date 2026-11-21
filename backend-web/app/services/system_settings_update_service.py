@@ -13,9 +13,6 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from app.services.system_setting_service import SENSITIVE_KEYS, SystemSettingService
-from common.services.remote_password_login_api import (
-    validate_remote_password_login_settings,
-)
 from common.services.system_setting_validation import (
     parse_boolean_setting,
     parse_log_retention_days,
@@ -26,11 +23,6 @@ from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS, normalize
 from common.utils.email_utils import normalize_email_address
 
 LOG_RETENTION_KEY = "log.retention_days"
-PASSWORD_LOGIN_MODE_KEY = "password_login.mode"
-PASSWORD_LOGIN_MODES = {"protocol", "browser"}
-PASSWORD_LOGIN_PROTOCOL_MODE = "protocol"
-PASSWORD_LOGIN_REMOTE_URL_KEY = "password_login.remote_url"
-PASSWORD_LOGIN_REMOTE_SECRET_KEY_KEY = "password_login.remote_secret_key"
 CAPTCHA_SLIDER_MODE_KEY = "captcha.slider_mode"
 CAPTCHA_SLIDER_MODES = {"browser", "real_mouse"}
 PROXY_URL_KEY = "proxy.api_url"
@@ -40,8 +32,6 @@ _TRIMMED_SETTING_KEYS = {
     "smtp_port",
     "smtp_user",
     LOG_RETENTION_KEY,
-    PASSWORD_LOGIN_REMOTE_URL_KEY,
-    PASSWORD_LOGIN_REMOTE_SECRET_KEY_KEY,
     PROXY_URL_KEY,
 }
 
@@ -78,13 +68,6 @@ def _normalize_setting_value(key: str, raw_value: str) -> tuple[str, str | None]
     if key in _TRIMMED_SETTING_KEYS:
         value = value.strip()
 
-    if key == PASSWORD_LOGIN_MODE_KEY:
-        value = value.strip().lower()
-        if value == "auto":
-            value = "browser"
-        if value not in PASSWORD_LOGIN_MODES:
-            return value, "账号密码登录方式无效，请选择协议登录或浏览器登录"
-
     if key == CAPTCHA_SLIDER_MODE_KEY:
         value = value.strip().lower()
         if value not in CAPTCHA_SLIDER_MODES:
@@ -109,22 +92,6 @@ def _validate_target_state(target: Mapping[str, str], changed_keys: set[str]) ->
         proxy_url = str(target.get(PROXY_URL_KEY) or "").strip()
         if parse_boolean_setting(target.get(PROXY_ENABLED_KEY)) and not proxy_url:
             return "开启代理前请先填写代理 API 的 URL"
-
-    password_login_keys = {
-        PASSWORD_LOGIN_MODE_KEY,
-        PASSWORD_LOGIN_REMOTE_URL_KEY,
-        PASSWORD_LOGIN_REMOTE_SECRET_KEY_KEY,
-    }
-    if changed_keys.intersection(password_login_keys):
-        login_mode = str(target.get(PASSWORD_LOGIN_MODE_KEY) or "").strip().lower()
-        if login_mode == PASSWORD_LOGIN_PROTOCOL_MODE:
-            error_message = validate_remote_password_login_settings(
-                str(target.get(PASSWORD_LOGIN_REMOTE_URL_KEY) or ""),
-                str(target.get(PASSWORD_LOGIN_REMOTE_SECRET_KEY_KEY) or ""),
-            )
-            if error_message:
-                return error_message
-    return None
 
 
 async def validate_system_settings_update(

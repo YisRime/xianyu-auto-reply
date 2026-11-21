@@ -23,8 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.core.config import get_settings
 from app.services.account_service import AccountService
-from app.services.password_login import password_login_manager
-from app.services.password_login.manager import SESSION_PREFIX
 from common.models.system_setting import SystemSetting
 from common.models.user import User
 from common.services.account_limit_service import AccountLimitExceededError, AccountLimitService
@@ -42,29 +40,6 @@ class PasswordLoginRequest(BaseModel):
     account: str
     password: str
     show_browser: bool = False
-
-
-# ==================== 模式判定 ====================
-
-async def _decide_mode(db: AsyncSession) -> bool:
-    """严格按系统设置决定走协议还是浏览器。
-
-    Returns:
-        是否使用协议登录
-    """
-    rows = (await db.execute(
-        select(SystemSetting).where(
-            SystemSetting.key == "password_login.mode"
-        )
-    )).scalars().all()
-    m = {r.key: (r.value or "").strip() for r in rows}
-
-    mode = (m.get("password_login.mode") or "browser").lower()
-    if mode == "protocol":
-        return True
-    if mode != "browser":
-        logger.warning(f"账号密码登录方式 {mode or '空'} 无效，按浏览器登录处理")
-    return False
 
 
 # ==================== 路由 ====================
@@ -87,28 +62,7 @@ async def password_login(
         except AccountLimitExceededError as exc:
             return {"success": False, "message": str(exc)}
 
-    use_protocol = await _decide_mode(account_service.session)
-    logger.info(
-        f"【{current_user.username}】账号密码登录 {request.account_id}: "
-        f"{'协议' if use_protocol else '浏览器'}模式"
-    )
-
-    if use_protocol:
-        session_id = password_login_manager.start(
-            account_id=request.account_id,
-            account=request.account,
-            password=request.password,
-            show_browser=request.show_browser,
-            owner_id=current_user.id,
-        )
-        return {
-            "success": True,
-            "session_id": session_id,
-            "status": "processing",
-            "message": "登录任务已启动，请等待...",
-        }
-
-    # 浏览器方式：代理到 websocket（现状不变）
+    logger.info(f"【{current_user.username}】账号密码登录 {request.account_id}: 浏览器模式")
     return await _proxy_ws_login(request, current_user.id)
 
 
@@ -144,13 +98,6 @@ async def check_login_status(
     current_user: User = Depends(deps.get_current_active_user),
 ):
     """查询登录状态：pl_ 前缀→本地协议会话（校验归属）；否则→代理 websocket。"""
-    # 本地协议会话
-    if session_id.startswith(SESSION_PREFIX):
-        result = password_login_manager.get_status(session_id, current_user.id)
-        if result is None:
-            return {"status": "not_found", "message": "会话不存在或已过期"}
-        return result
-
     # 浏览器会话：代理 websocket
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -173,10 +120,6 @@ async def cancel_login(
     current_user: User = Depends(deps.get_current_active_user),
 ):
     """取消登录会话：pl_ 前缀→本地协议会话（校验归属）；否则→代理 websocket。"""
-    if session_id.startswith(SESSION_PREFIX):
-        ok = password_login_manager.cancel(session_id, current_user.id)
-        return {"success": ok, "message": "登录会话已取消" if ok else "会话不存在"}
-
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.delete(

@@ -5,7 +5,6 @@ import { getExeForcedHiddenMenuKeys } from '@/config/navigation'
 import { getHiddenMenuKeysFromSettings } from '@/api/settings'
 import type { SystemSettings } from '@/types'
 import { MenuVisibilitySettings } from './MenuVisibilitySettings'
-import { PasswordLoginModeSetting } from './PasswordLoginModeSetting'
 import { SliderModeSetting } from './SliderModeSetting'
 import type { SetSystemSettings } from './settingsTypes'
 
@@ -84,17 +83,7 @@ export function BasicSettingsTab({
             />
           </div>
 
-          <PasswordLoginModeSetting
-            value={settings?.['password_login.mode']}
-            remoteUrl={settings?.['password_login.remote_url']}
-            remoteSecretKey={settings?.['password_login.remote_secret_key']}
-            onSaved={(mode, remoteUrl, remoteSecretKey) => setSettings((current) => current ? {
-              ...current,
-              'password_login.mode': mode,
-              'password_login.remote_url': remoteUrl ?? String(current['password_login.remote_url'] || ''),
-              'password_login.remote_secret_key': remoteSecretKey ?? String(current['password_login.remote_secret_key'] || ''),
-            } : current)}
-          />
+
           <SliderModeSetting
             value={settings?.['captcha.slider_mode']}
             onSaved={(mode) => setSettings((current) => current ? { ...current, 'captcha.slider_mode': mode } : current)}

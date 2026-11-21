@@ -64,10 +64,6 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     "captcha.remote_cooldown_seconds": ("600", "远程调用达到处理中上限后的冷却秒数，0=不冷却"),
     "captcha.remote_cooldown_until": ("0", "远程过滑块调用冷却截止时间戳"),
     "captcha.slider_mode": ("browser", "滑块滑动方式：browser/real_mouse"),
-    # 账号密码登录模式：protocol-协议登录 / browser-浏览器登录
-    "password_login.mode": ("browser", "账号密码登录模式：protocol/browser"),
-    "password_login.remote_url": ("", "协议登录远程接口URL"),
-    "password_login.remote_secret_key": ("", "协议登录远程接口秘钥"),
     "token.remote_url": ("", "Token远程接口URL"),
     "token.remote_secret_key": ("", "Token远程接口秘钥"),
 }
@@ -125,11 +121,6 @@ NO_ESCAPE_KEYS = {
     # real_mouse 排队权重：数字字符串，无需 XSS 转义
     "captcha.real_mouse_weight_local",
     "captcha.real_mouse_weight_remote",
-    # 账号密码登录模式：枚举字符串，无需转义
-    "password_login.mode",
-    # 协议登录远程接口配置：URL 和秘钥不能被 XSS 转义
-    "password_login.remote_url",
-    "password_login.remote_secret_key",
     # 服务间令牌不会经由通用设置接口写入；加入免转义集合，防止内部维护时被破坏。
     "security.internal_api_token",
 }

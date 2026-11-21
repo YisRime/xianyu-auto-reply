@@ -4,7 +4,6 @@ import { RefreshCw } from 'lucide-react'
 import { PageLoading } from '@/components/common/Loading'
 import { ConfirmModal } from '@/components/common/ConfirmModal'
 import { RechargeModal } from './RechargeModal'
-import { FundFlowModal } from './FundFlowModal'
 import { RenewModal } from './RenewModal'
 import { PersonalBasicSettings } from './PersonalBasicSettings'
 import { PersonalFinanceModals } from './PersonalFinanceModals'
@@ -20,7 +19,7 @@ export function PersonalSettings() {
   const [remoteOpened, setRemoteOpened] = useState(false)
   const {
     loading, loadSettings, balance, renewPrice, showRenew, setShowRenew,
-    showFundFlowModal, setShowFundFlowModal, showRecharge, setShowRecharge, setExpireAt,
+    showRecharge, setShowRecharge, setExpireAt,
     resetConfirmOpen, resettingDockCode, handleResetDockCode, setResetConfirmOpen,
     secretKeyResetConfirmOpen, resettingSecretKey, handleResetSecretKey, setSecretKeyResetConfirmOpen,
   } = settings
@@ -89,12 +88,6 @@ export function PersonalSettings() {
       />
 
       <PersonalFinanceModals settings={settings} finance={finance} />
-
-      {/* 资金流水弹窗 */}
-      <FundFlowModal
-        visible={showFundFlowModal}
-        onClose={() => setShowFundFlowModal(false)}
-      />
 
       {/* 充值弹窗 */}
       <RechargeModal

@@ -76,7 +76,6 @@ const routeTitles: Record<string, string> = {
   '/distribution/docked': '对接的商品',
   '/distribution/dealers': '分销商管理',
   '/distribution/sub-dealers': '下级分销商',
-  '/admin/fund-flows': '资金流水',
   '/distribution/agent-orders': '代理订单',
   '/accounts/shared-scan': '共享扫码登录',
   '/shared-scan': '共享扫码登录',

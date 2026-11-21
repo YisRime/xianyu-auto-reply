@@ -22,9 +22,7 @@ from . import (
     blacklist,
     captcha,
     cards,
-    card_dock,
     data_analysis,
-    distribution,
     chat_new,
     chat_new_ws,
     chat_new_image,
@@ -126,8 +124,6 @@ api_router.include_router(order_fallback_account.router, tags=["兜底下单账�
 api_router.include_router(keywords.router, prefix="/keywords-with-item-id", tags=["关键词管理"])
 api_router.include_router(api_keywords.router)
 api_router.include_router(cards.router, prefix="/cards", tags=["卡券管理"])
-api_router.include_router(distribution.router, prefix="/distribution", tags=["分销管理"])
-api_router.include_router(card_dock.router, tags=["分销卡券"])  # 已定义prefix="/card-dock"
 api_router.include_router(payment.router, tags=["支付管理"])  # 已定义prefix="/payment"
 
 # AI回复

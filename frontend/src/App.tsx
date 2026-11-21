@@ -45,14 +45,6 @@ const GoofishScheduledCrawler = React.lazy(() => import('@/pages/crawler/Goofish
 const Cards = React.lazy(() => import('@/pages/cards/Cards').then(m => ({ default: m.Cards })))
 const PersonalSettings = React.lazy(() => import('@/pages/personalSettings/PersonalSettings').then(m => ({ default: m.PersonalSettings })))
 const Blacklist = React.lazy(() => import('@/pages/blacklist/Blacklist'))
-const SupplyManagement = React.lazy(() => import('@/pages/distribution/SupplyManagement').then(m => ({ default: m.SupplyManagement })))
-const DockedProducts = React.lazy(() => import('@/pages/distribution/DockedProducts').then(m => ({ default: m.DockedProducts })))
-const DealerManagement = React.lazy(() => import('@/pages/distribution/DealerManagement').then(m => ({ default: m.DealerManagement })))
-const FundFlows = React.lazy(() => import('@/pages/distribution/FundFlows').then(m => ({ default: m.FundFlows })))
-const SubDealerManagement = React.lazy(() => import('@/pages/distribution/SubDealerManagement').then(m => ({ default: m.SubDealerManagement })))
-const SourceManagement = React.lazy(() => import('@/pages/distribution/SourceManagement').then(m => ({ default: m.SourceManagement })))
-const AgentOrders = React.lazy(() => import('@/pages/distribution/AgentOrders').then(m => ({ default: m.AgentOrders })))
-const CardPickup = React.lazy(() => import('@/pages/distribution/CardPickup').then(m => ({ default: m.CardPickup })))
 
 // 共享多人扫码登录
 const SharedScanManager = React.lazy(() => import('@/pages/shared-scan/SharedScanManager').then(m => ({ default: m.SharedScanManager })))
@@ -361,14 +353,6 @@ function App() {
             <Route path="goofish-compass" element={<GoofishCompass />} />
             <Route path="goofish-scheduled-crawler" element={<GoofishScheduledCrawler />} />
             <Route path="cards" element={<Cards />} />
-            <Route path="distribution/supply" element={<SupplyManagement />} />
-            <Route path="distribution/card-pickup" element={<CardPickup />} />
-            <Route path="distribution/docked" element={<DockedProducts />} />
-            <Route path="distribution/dealers" element={<DealerManagement />} />
-            <Route path="distribution/sub-dealers" element={<SubDealerManagement />} />
-            <Route path="admin/fund-flows" element={<FundFlows />} />
-            <Route path="distribution/sources" element={<SourceManagement />} />
-            <Route path="distribution/agent-orders" element={<AgentOrders />} />
             {/* 商品发布 */}
             <Route path="product-publish/materials" element={<ProductMaterials />} />
             <Route path="product-publish/single" element={<ProductPublish />} />

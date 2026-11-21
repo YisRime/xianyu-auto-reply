@@ -33,7 +33,6 @@ export function PersonalBasicSettings({ settings, finance }: PersonalBasicSettin
     balance,
     expireAt,
     setShowRenew,
-    setShowFundFlowModal,
     setShowRecharge,
     paymentQrcode,
     paymentType,
@@ -135,13 +134,6 @@ export function PersonalBasicSettings({ settings, finance }: PersonalBasicSettin
             余额管理
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowFundFlowModal(true)}
-              className="btn-ios-secondary text-sm"
-            >
-              <Wallet className="w-4 h-4" />
-              资金流水
-            </button>
             <button
               onClick={() => setShowQrcodeModal(true)}
               className="btn-ios-secondary text-sm"

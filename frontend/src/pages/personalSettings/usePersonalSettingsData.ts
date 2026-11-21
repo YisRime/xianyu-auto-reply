@@ -26,7 +26,6 @@ export function usePersonalSettingsData() {
   const [expireAt, setExpireAt] = useState<string | null>(null)
   const [renewPrice, setRenewPrice] = useState('')
   const [showRenew, setShowRenew] = useState(false)
-  const [showFundFlowModal, setShowFundFlowModal] = useState(false)
   const [paymentQrcode, setPaymentQrcode] = useState('')
   const [paymentType, setPaymentType] = useState<'alipay' | 'wechat'>('alipay')
 
@@ -341,8 +340,6 @@ export function usePersonalSettingsData() {
     renewPrice,
     showRenew,
     setShowRenew,
-    showFundFlowModal,
-    setShowFundFlowModal,
     showRecharge,
     setShowRecharge,
     setExpireAt,

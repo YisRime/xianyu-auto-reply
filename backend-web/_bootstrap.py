@@ -412,6 +412,26 @@ async def global_exception_handler(request, exc):
     )
 
 
+# 前端静态资源：优先使用 Vite 生产构建产物，无需再额外启动前端开发服务器
+_frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if (_frontend_dist / "index.html").exists():
+    from fastapi.responses import FileResponse
+
+    _frontend_assets = _frontend_dist / "assets"
+    if _frontend_assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_frontend_assets)), name="frontend-assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend(full_path: str):
+        """SPA 兜底路由：命中构建产物直接返回文件，否则回退 index.html。"""
+        target = (_frontend_dist / full_path).resolve()
+        if full_path and _frontend_dist in target.parents and target.is_file():
+            return FileResponse(str(target))
+        return FileResponse(str(_frontend_dist / "index.html"))
+
+    logger.info(f"前端静态资源已挂载: / -> {_frontend_dist}")
+
+
 def run_server():
     """启动HTTP服务（供 main.py 的 __main__ 块调用）"""
     import uvicorn

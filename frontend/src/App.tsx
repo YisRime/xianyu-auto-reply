@@ -35,8 +35,6 @@ const NotificationChannels = React.lazy(() => import('@/pages/notifications/Noti
 const MessageNotifications = React.lazy(() => import('@/pages/notifications/MessageNotifications').then(m => ({ default: m.MessageNotifications })))
 const Settings = React.lazy(() => import('@/pages/settings/Settings').then(m => ({ default: m.Settings })))
 const MessageFilters = React.lazy(() => import('@/pages/messageFilters/MessageFilters').then(m => ({ default: m.MessageFilters })))
-const Feedback = React.lazy(() => import('@/pages/feedback/Feedback'))
-const Tutorial = React.lazy(() => import('@/pages/tutorial/Tutorial').then(m => ({ default: m.Tutorial })))
 const ItemSearch = React.lazy(() => import('@/pages/search/ItemSearch').then(m => ({ default: m.ItemSearch })))
 const GoofishCompass = React.lazy(() => import('@/pages/compass/GoofishCompass').then(m => ({ default: m.GoofishCompass })))
 const GoofishScheduledCrawler = React.lazy(() => import('@/pages/crawler/GoofishScheduledCrawler').then(m => ({ default: m.GoofishScheduledCrawler })))
@@ -346,7 +344,6 @@ function App() {
             <Route path="online-chat-new" element={<></>} />
             <Route path="notification-channels" element={<NotificationChannels />} />
             <Route path="message-notifications" element={<MessageNotifications />} />
-            <Route path="feedback" element={<Feedback />} />
             <Route path="item-search" element={<ItemSearch />} />
             <Route path="goofish-compass" element={<GoofishCompass />} />
             <Route path="goofish-scheduled-crawler" element={<GoofishScheduledCrawler />} />
@@ -373,7 +370,6 @@ function App() {
             <Route path="shared-scan" element={<Navigate to="/accounts/shared-scan" replace />} />
             <Route path="disclaimer" element={<Disclaimer />} />
             <Route path="about" element={<About />} />
-            <Route path="tutorial" element={<Tutorial />} />
 
             {/* Admin routes */}
             <Route path="admin/users" element={<Users />} />

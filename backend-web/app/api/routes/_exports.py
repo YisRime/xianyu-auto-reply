@@ -36,7 +36,6 @@ from . import (
     default_replies,
     face_verification,
     email_logs,
-    feedback,
     geetest,
     goofish_compass,
     goofish_crawler,
@@ -144,7 +143,6 @@ api_router.include_router(auto_rate.router, prefix="/auto-rate", tags=["自动�
 # 系统设置
 api_router.include_router(system_settings.router, prefix="/system-settings", tags=["系统设置"])
 api_router.include_router(system_control.router, tags=["系统管理"])  # 已定义prefix="/system-control"
-api_router.include_router(feedback.router, prefix="/feedbacks", tags=["反馈管理"])
 api_router.include_router(auto_reply_logs.router, tags=["消息日志"])
 api_router.include_router(account_login_logs.router, tags=["账号登录日志"])
 api_router.include_router(user_login_logs.router, tags=["用户登录日志"])

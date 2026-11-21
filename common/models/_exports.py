@@ -22,8 +22,6 @@ from common.models.system_setting import SystemSetting
 from common.models.user_setting import UserSetting
 from common.models.notification_channel import NotificationChannel
 from common.models.message_notification import MessageNotification
-from common.models.feedback import Feedback, FeedbackType
-from common.models.feedback_message import FeedbackMessage
 from common.models.goofish_crawl_job import GoofishCrawlJob
 from common.models.goofish_crawl_item import GoofishCrawlItem
 from common.models.cookie_refresh_schedule import CookieRefreshSchedule
@@ -96,9 +94,6 @@ __all__ = [
     "UserSetting",
     "NotificationChannel",
     "MessageNotification",
-    "Feedback",
-    "FeedbackType",
-    "FeedbackMessage",
     "GoofishCrawlJob",
     "GoofishCrawlItem",
     "CookieRefreshSchedule",

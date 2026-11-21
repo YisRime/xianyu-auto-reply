@@ -5,7 +5,6 @@ import {
   BarChart3,
   Bell,
   BellOff,
-  BookOpen,
   Database,
   FileText,
   Filter,
@@ -21,7 +20,6 @@ import {
   MapPin,
   MessageCircle,
   MessageSquare,
-  MessageSquarePlus,
   Package,
   PackageSearch,
   Repeat,
@@ -152,8 +150,6 @@ export const adminNavItems: NavEntry[] = [
 ]
 
 export const bottomNavItems: NavItem[] = [
-  { key: 'tutorial', icon: BookOpen, label: '使用教程', path: '/tutorial' },
-  { key: 'feedback', icon: MessageSquarePlus, label: '意见反馈', path: '/feedback' },
   { key: 'disclaimer', icon: AlertTriangle, label: '免责声明', path: '/disclaimer' },
   { key: 'about', icon: Info, label: '关于', path: '/about' },
 ]

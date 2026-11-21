@@ -52,7 +52,6 @@ from . import (
     message,
     message_filters,
     notifications,
-    online_install,
     orders,
     password_login,
     product_publish,
@@ -221,7 +220,6 @@ api_router.include_router(chat_customer_order.router, tags=["在线聊天(新)�
 api_router.include_router(version.router, tags=["版本检测"])  # 已定义prefix="/version"
 
 # 在线安装（公开入口，无需登录，按访客会话隔离安装任务和日志）
-api_router.include_router(online_install.router, tags=["在线安装"])
 
 
 __all__ = ["api_router"]

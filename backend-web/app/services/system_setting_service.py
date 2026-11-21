@@ -15,7 +15,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
-from app.services.payment_config_service import PAYMENT_SETTING_DEFAULTS
 from common.services.remote_token_api import (
     TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
     TOKEN_REMOTE_URL_SETTING_KEY,
@@ -43,7 +42,6 @@ DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理�
 
 DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     **EMAIL_DOMAIN_DEFAULTS,
-    **PAYMENT_SETTING_DEFAULTS,
     REGISTRATION_ENABLED_KEY: ("false", "是否允许新用户自助注册（关闭后拒绝注册及注册验证码发送、验证）"),
     "login.system_name": ("闲鱼管理系统", "登录页系统名称"),
     "login.system_title": (DEFAULT_LOGIN_SYSTEM_TITLE, "登录页系统标题"),
@@ -107,7 +105,6 @@ NO_ESCAPE_KEYS = {
     "alipay.alipay_public_key",
     "alipay.gateway_url",
     "alipay.notify_url",
-    "payment.channel",
     "zzcode.pid",
     "zzcode.key",
     "zzcode.gateway",

@@ -35,8 +35,6 @@ from common.schemas.user import AdminUserCreate, AdminUserUpdate
 from app.services.dashboard_stats_service import DashboardStatsService
 from app.services.scheduled_batch_log_service import ScheduledBatchLogService
 from app.services.user_service import UserService
-from app.services.recharge_service import RechargeService
-from common.services.settlement_service import BALANCE_KEY
 
 from common.utils.time_utils import get_beijing_now_naive, safe_isoformat
 router = APIRouter(tags=["admin"])
@@ -66,45 +64,11 @@ LEGACY_TABLE_ALIASES = {
 }
 
 
-def _format_balance(val: str | None) -> str:
-    """将余额原始值（xy_user_settings 中的字符串）格式化为两位小数字符串。
-
-    取不到 / 解析失败一律视为 0.00，避免前端展示异常。
-    """
-    if val is None:
-        return "0.00"
-    try:
-        return f"{Decimal(str(val)):.2f}"
-    except (InvalidOperation, ValueError):
-        return "0.00"
-
-
-async def _fetch_user_balances(session: AsyncSession, user_ids: list[int]) -> dict[int, str]:
-    """批量查询用户余额（存于 xy_user_settings，key=balance）。
-
-    Args:
-        session: 数据库会话
-        user_ids: 用户ID列表
-
-    Returns:
-        {user_id: 余额原始字符串}，无记录的用户不在结果中
-    """
-    if not user_ids:
-        return {}
-    stmt = select(UserSetting.user_id, UserSetting.value).where(
-        UserSetting.key == BALANCE_KEY,
-        UserSetting.user_id.in_(user_ids),
-    )
-    return {uid: val for uid, val in (await session.execute(stmt)).all()}
-
-
 def _build_user_payload(
     user: User,
     cookie_counts: dict[int, int] | None = None,
-    balances: dict[int, str] | None = None,
 ) -> dict:
     counts = cookie_counts or {}
-    balance_map = balances or {}
     return {
         "id": user.id,
         "username": user.username,
@@ -116,7 +80,6 @@ def _build_user_payload(
         "account_limit": user.account_limit,
         "cookie_count": counts.get(user.id, 0),
         "card_count": 0,
-        "balance": _format_balance(balance_map.get(user.id)),
         "expire_at": safe_isoformat(user.expire_at),
     }
 
@@ -154,9 +117,8 @@ async def list_users(
     }
 
     # 批量查询当前页用户的余额，避免逐行查询
-    balances = await _fetch_user_balances(session, [user.id for user in users])
 
-    payload = [_build_user_payload(user, cookie_counts, balances) for user in users]
+    payload = [_build_user_payload(user, cookie_counts) for user in users]
     return {"users": payload, "success": True, "total": total, "limit": limit, "offset": offset}
 
 
@@ -222,14 +184,8 @@ async def update_user(
         await session.rollback()
         return ApiResponse(success=False, message=f"更新用户失败: {str(exc)}")
 
-    balances = await _fetch_user_balances(session, [updated_user.id])
-    return ApiResponse(success=True, message="用户更新成功", data={"user": _build_user_payload(updated_user, balances=balances)})
+    return ApiResponse(success=True, message="用户更新成功", data={"user": _build_user_payload(updated_user)})
 
-
-class AdminRechargeRequest(BaseModel):
-    """管理员手动调整用户余额请求"""
-    amount: str = Field(..., description="调整金额，正数为充值，负数为扣减，例如：10.00 或 -5.00")
-    remark: str = Field(default="", description="备注（可选）")
 
 
 @router.post("/users/{user_id}/recharge", response_model=ApiResponse)

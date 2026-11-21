@@ -35,7 +35,6 @@ import type {
 import { AppearanceSettingsTab } from './AppearanceSettingsTab'
 import { BasicSettingsTab } from './BasicSettingsTab'
 import { ContactSettingsTab } from './ContactSettingsTab'
-import { PaymentSettingsTab } from './PaymentSettingsTab'
 import { ServiceRestartCard } from './ServiceRestartCard'
 import { SystemSettingsTabs } from './SystemSettingsTabs'
 import { TestEmailModal } from './TestEmailModal'
@@ -177,17 +176,6 @@ export function Settings() {
         onThemeFontSave={() => void actions.saveThemeFont(themeFont)}
         onLoginBrandingChange={(key: keyof LoginBrandingSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
         onLoginBrandingSave={() => void actions.saveLoginBranding(loginBranding)}
-      />}
-
-      {activeTab === 'payment' && <PaymentSettingsTab
-        settings={settings}
-        setSettings={setSettings}
-        paymentSaving={actions.saving('payment')}
-        withdrawSaving={actions.saving('withdraw')}
-        distributionSaving={actions.saving('distribution')}
-        onPaymentSave={() => void actions.savePayment()}
-        onWithdrawSave={() => void actions.saveWithdraw()}
-        onDistributionSave={() => void actions.saveDistribution()}
       />}
 
       {activeTab === 'user' && <UserNetworkSettingsTab

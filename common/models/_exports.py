@@ -37,10 +37,8 @@ from common.models.db_backup_log import DbBackupLog
 from common.models.confirm_receipt_message import ConfirmReceiptMessage
 from common.models.scheduled_task import ScheduledTask
 from common.models.card_item_relation import CardItemRelation
-from common.models.recharge_order import RechargeOrder
 from common.models.dock_code_binding import DockCodeBinding
 from common.models.agent_order import AgentOrder
-from common.models.settlement_record import SettlementRecord
 from common.models.product_material import ProductMaterial
 from common.models.publish_log import PublishLog
 from common.models.publish_address import PublishAddress
@@ -109,9 +107,7 @@ __all__ = [
     "ConfirmReceiptMessage",
     "ScheduledTask",
     "CardItemRelation",
-    "RechargeOrder",
     "DockCodeBinding",
-    "SettlementRecord",
     "AgentOrder",
     "ProductMaterial",
     "PublishLog",

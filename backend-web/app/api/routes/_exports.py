@@ -12,7 +12,6 @@ from fastapi import APIRouter
 from . import (
     activation,
     admin,
-    admin_settlements,
     ai,
     ai_listing,
     auto_reply_logs,
@@ -27,7 +26,6 @@ from . import (
     chat_new_image,
     chat_quick_phrase,
     chat_customer_order,
-    payment,
     confirm_receipt_messages,
     api_cookie_renew_logs,
     cookie_refresh,
@@ -121,7 +119,6 @@ api_router.include_router(order_fallback_account.router, tags=["兜底下单账�
 api_router.include_router(keywords.router, prefix="/keywords-with-item-id", tags=["关键词管理"])
 api_router.include_router(api_keywords.router)
 api_router.include_router(cards.router, prefix="/cards", tags=["卡券管理"])
-api_router.include_router(payment.router, tags=["支付管理"])  # 已定义prefix="/payment"
 
 # AI回复
 api_router.include_router(ai.router, prefix="/ai-reply-settings", tags=["AI回复"])
@@ -152,7 +149,6 @@ api_router.include_router(risk_control_logs.router, tags=["风控日志"])
 
 # 管理员功能
 api_router.include_router(admin.router, prefix="/admin", tags=["管理员功能"])
-api_router.include_router(admin_settlements.router, prefix="/admin", tags=["管理员功能"])
 api_router.include_router(cookies_refresh_logs.router, prefix="/admin", tags=["COOKIES刷新日志"])
 api_router.include_router(api_cookie_renew_logs.router, prefix="/admin", tags=["接口续期Cookies日志"])
 api_router.include_router(token_renewal_logs.router, prefix="/admin", tags=["Token续期日志"])

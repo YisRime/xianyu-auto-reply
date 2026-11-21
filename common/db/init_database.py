@@ -1262,57 +1262,7 @@ class DatabaseInitializer:
         """,
 
         # 30. 资金流水表
-        "xy_fund_flows": """
-            CREATE TABLE IF NOT EXISTS xy_fund_flows (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-                user_id BIGINT NOT NULL COMMENT '用户ID',
-                type VARCHAR(32) NOT NULL COMMENT '流水类型：income-收入，expense-支出',
-                amount VARCHAR(32) NOT NULL COMMENT '发生额',
-                balance_before VARCHAR(32) NOT NULL COMMENT '发生前余额',
-                balance_after VARCHAR(32) NOT NULL COMMENT '发生后余额',
-                order_id BIGINT DEFAULT NULL COMMENT '关联订单ID',
-                dock_record_id BIGINT DEFAULT NULL COMMENT '关联对接记录ID',
-                description VARCHAR(500) DEFAULT NULL COMMENT '流水描述',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发生时间',
-                INDEX idx_user_id (user_id),
-                INDEX idx_order_id (order_id),
-                INDEX idx_dock_record_id (dock_record_id),
-                INDEX idx_created_at (created_at),
-                INDEX idx_ff_user_id_desc (user_id, id),
-                INDEX idx_ff_user_type_id_desc (user_id, type, id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资金流水表';
-        """,
-
         # 31. 充值订单表
-        "xy_recharge_orders": """
-            CREATE TABLE IF NOT EXISTS xy_recharge_orders (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-                order_no VARCHAR(64) NOT NULL COMMENT '充值订单号',
-                user_id BIGINT NOT NULL COMMENT '用户ID',
-                amount VARCHAR(32) NOT NULL COMMENT '充值金额',
-                order_type VARCHAR(20) NOT NULL DEFAULT 'recharge' COMMENT '订单类型：recharge-余额充值，ad-广告申请付款',
-                channel VARCHAR(16) NOT NULL DEFAULT 'alipay' COMMENT '支付渠道：alipay-支付宝当面付，zzcode-码支付',
-                pay_type VARCHAR(16) DEFAULT NULL COMMENT '码支付子方式：alipay/wxpay/qqpay',
-                zzcode_amount_confirmed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '码支付订单金额是否已确认',
-                callback_merchant_id VARCHAR(128) DEFAULT NULL COMMENT '创建订单时使用的回调验签商户ID',
-                callback_verify_key TEXT NULL COMMENT '创建订单时使用的回调验签密钥或公钥',
-                status VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT '订单状态：pending-待支付，paid-已支付，expired-已过期，failed-失败',
-                trade_no VARCHAR(128) DEFAULT NULL COMMENT '上游支付交易号',
-                qr_code VARCHAR(512) DEFAULT NULL COMMENT '支付二维码内容',
-                pay_target_kind VARCHAR(16) DEFAULT NULL COMMENT '支付目标类型：qrcode/payurl/urlscheme',
-                pay_url VARCHAR(1000) DEFAULT NULL COMMENT '支付跳转或协议链接',
-                ad_id BIGINT DEFAULT NULL COMMENT '广告付款关联广告ID',
-                ad_settled_at DATETIME DEFAULT NULL COMMENT '广告付款结算时间',
-                paid_at DATETIME DEFAULT NULL COMMENT '支付时间',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                UNIQUE INDEX idx_order_no (order_no),
-                UNIQUE INDEX uk_recharge_trade_no (trade_no),
-                INDEX idx_user_id (user_id),
-                INDEX idx_status (status)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='充值订单表';
-        """,
-
         # 32. 对接码绑定表
         "xy_dock_code_bindings": """
             CREATE TABLE IF NOT EXISTS xy_dock_code_bindings (
@@ -1380,23 +1330,6 @@ class DatabaseInitializer:
         """,
 
         # 35. 结算记录表
-        "xy_settlement_records": """
-            CREATE TABLE IF NOT EXISTS xy_settlement_records (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-                user_id BIGINT NOT NULL COMMENT '用户ID',
-                alipay_id VARCHAR(128) NOT NULL COMMENT '支付宝ID',
-                amount VARCHAR(32) NOT NULL COMMENT '提现金额',
-                status VARCHAR(32) NOT NULL DEFAULT 'pending_review' COMMENT '状态：pending_review-待审核，approved-已通过，rejected-已拒绝，paid-已打款',
-                remark TEXT COMMENT '备注',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                INDEX idx_user_id (user_id),
-                INDEX idx_status (status),
-                INDEX idx_created_at (created_at),
-                INDEX idx_sr_user_created_id (user_id, created_at, id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='结算记录表';
-        """,
-
         # 36. 激活码生成日志表
         "xy_activation_logs": """
             CREATE TABLE IF NOT EXISTS xy_activation_logs (
@@ -1996,16 +1929,6 @@ class DatabaseInitializer:
             ("location_title", "VARCHAR(128) DEFAULT NULL COMMENT '站外联系方式位置标题'", "location_latitude"),
             ("location_subtitle", "VARCHAR(255) DEFAULT NULL COMMENT '站外联系方式位置副标题'", "location_title"),
         ],
-        "xy_recharge_orders": [
-            ("order_type", "VARCHAR(20) NOT NULL DEFAULT 'recharge' COMMENT '订单类型：recharge-余额充值，ad-广告申请付款'", "amount"),
-            ("channel", "VARCHAR(16) NOT NULL DEFAULT 'alipay' COMMENT '支付渠道：alipay-支付宝当面付，zzcode-码支付'", "order_type"),
-            ("pay_type", "VARCHAR(16) DEFAULT NULL COMMENT '码支付子方式：alipay/wxpay/qqpay'", "channel"),
-            ("zzcode_amount_confirmed", "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '码支付订单金额是否已确认'", "pay_type"),
-            ("callback_merchant_id", "VARCHAR(128) DEFAULT NULL COMMENT '创建订单时使用的回调验签商户ID'", "zzcode_amount_confirmed"),
-            ("callback_verify_key", "TEXT NULL COMMENT '创建订单时使用的回调验签密钥或公钥'", "callback_merchant_id"),
-            ("pay_target_kind", "VARCHAR(16) DEFAULT NULL COMMENT '支付目标类型：qrcode/payurl/urlscheme'", "qr_code"),
-            ("pay_url", "VARCHAR(1000) DEFAULT NULL COMMENT '支付跳转或协议链接'", "pay_target_kind"),
-        ],
         "xy_token_cache": [
             ("renew_expire_at", "DATETIME DEFAULT NULL COMMENT '续期Token过期时间'", "expire_at"),
         ],
@@ -2213,11 +2136,6 @@ class DatabaseInitializer:
             ("level2_cost", "VARCHAR(32) DEFAULT NULL COMMENT '二级拿货价（一级的sub_dock_price）'", "card_price"),
             ("fee_payer", "VARCHAR(32) DEFAULT NULL COMMENT '手续费承担方：dealer-分销商，distributor-货主'", "fee_amount"),
             ("owner_user_id", "BIGINT DEFAULT NULL COMMENT '货主用户ID'", "upstream_dock_record_id"),
-        ],
-        "xy_settlement_records": [
-            ("payment_type", "VARCHAR(16) COMMENT '收款方式：alipay-支付宝，wechat-微信'", "alipay_id"),
-            ("payment_qrcode", "VARCHAR(512) COMMENT '收款码图片路径'", "payment_type"),
-            ("reject_reason", "VARCHAR(512) COMMENT '拒绝原因'", "remark"),
         ],
         "xy_publish_logs": [
             ("resolved_address_id", "BIGINT DEFAULT NULL COMMENT '本次发布命中的地址池ID'", "error_message"),
@@ -2594,29 +2512,6 @@ class DatabaseInitializer:
         
         async with ddl_connection() as conn:
             # 支付交易号全局唯一，防止同一上游交易被并发回调绑定到不同订单。
-            try:
-                check = text("""
-                    SELECT COUNT(*) FROM information_schema.STATISTICS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'xy_recharge_orders'
-                    AND INDEX_NAME = 'uk_recharge_trade_no'
-                """)
-                if (await conn.execute(check)).scalar() == 0:
-                    duplicate = await conn.execute(text("""
-                        SELECT trade_no FROM xy_recharge_orders
-                        WHERE trade_no IS NOT NULL AND trade_no <> ''
-                        GROUP BY trade_no HAVING COUNT(*) > 1 LIMIT 1
-                    """))
-                    if duplicate.scalar() is None:
-                        await conn.execute(text(
-                            "ALTER TABLE xy_recharge_orders ADD UNIQUE KEY uk_recharge_trade_no (trade_no)"
-                        ))
-                        logger.info("✓ xy_recharge_orders: 创建 uk_recharge_trade_no 唯一索引")
-                    else:
-                        logger.warning("✗ xy_recharge_orders 存在重复交易号，未创建唯一索引，请先备份并人工核查历史数据")
-            except Exception as e:
-                logger.warning(f"✗ xy_recharge_orders uk_recharge_trade_no 创建失败: {e}")
-
             try:
                 # xy_card_item_relations: 将旧的 uk_card_item(card_id, item_id) 替换为 uk_card_item_dock(card_id, item_id, dock_record_id)
                 # 检查旧索引是否存在
@@ -3142,57 +3037,6 @@ class DatabaseInitializer:
                     logger.info("✓ xy_scheduled_red_flower_log: 创建 idx_srf_batch_created_status 复合索引")
             except Exception as e:
                 logger.warning(f"✗ xy_scheduled_red_flower_log idx_srf_batch_created_status 创建失败: {e}")
-
-            # 为 xy_fund_flows 补建 (user_id, id) 复合索引
-            try:
-                check = text("""
-                    SELECT COUNT(*) FROM information_schema.STATISTICS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'xy_fund_flows'
-                    AND INDEX_NAME = 'idx_ff_user_id_desc'
-                """)
-                result = await conn.execute(check)
-                if result.scalar() == 0:
-                    await conn.execute(text(
-                        "ALTER TABLE xy_fund_flows ADD INDEX idx_ff_user_id_desc (user_id, id)"
-                    ))
-                    logger.info("✓ xy_fund_flows: 创建 idx_ff_user_id_desc 复合索引")
-            except Exception as e:
-                logger.warning(f"✗ xy_fund_flows idx_ff_user_id_desc 创建失败: {e}")
-
-            # 为 xy_fund_flows 补建 (user_id, type, id) 复合索引
-            try:
-                check = text("""
-                    SELECT COUNT(*) FROM information_schema.STATISTICS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'xy_fund_flows'
-                    AND INDEX_NAME = 'idx_ff_user_type_id_desc'
-                """)
-                result = await conn.execute(check)
-                if result.scalar() == 0:
-                    await conn.execute(text(
-                        "ALTER TABLE xy_fund_flows ADD INDEX idx_ff_user_type_id_desc (user_id, type, id)"
-                    ))
-                    logger.info("✓ xy_fund_flows: 创建 idx_ff_user_type_id_desc 复合索引")
-            except Exception as e:
-                logger.warning(f"✗ xy_fund_flows idx_ff_user_type_id_desc 创建失败: {e}")
-
-            # 为 xy_settlement_records 补建 (user_id, created_at, id) 复合索引
-            try:
-                check = text("""
-                    SELECT COUNT(*) FROM information_schema.STATISTICS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'xy_settlement_records'
-                    AND INDEX_NAME = 'idx_sr_user_created_id'
-                """)
-                result = await conn.execute(check)
-                if result.scalar() == 0:
-                    await conn.execute(text(
-                        "ALTER TABLE xy_settlement_records ADD INDEX idx_sr_user_created_id (user_id, created_at, id)"
-                    ))
-                    logger.info("✓ xy_settlement_records: 创建 idx_sr_user_created_id 复合索引")
-            except Exception as e:
-                logger.warning(f"✗ xy_settlement_records idx_sr_user_created_id 创建失败: {e}")
 
             # 为 xy_orders 补建 (owner_id, account_id, placed_at) 复合索引
             try:

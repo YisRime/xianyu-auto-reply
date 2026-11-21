@@ -587,7 +587,7 @@ class DatabaseInitializer:
                 account_id BIGINT COMMENT '关联账号ID',
                 keyword VARCHAR(120) NOT NULL COMMENT '关键词',
                 reply_content TEXT COMMENT '回复内容',
-                reply_type VARCHAR(32) COMMENT '回复类型(text/image/external_contact)',
+                reply_type VARCHAR(32) COMMENT '回复类型(text/image)',
                 image_url VARCHAR(512) COMMENT '图片URL',
                 item_id VARCHAR(64) COMMENT '商品ID',
                 priority INT DEFAULT 100 COMMENT '优先级',
@@ -708,7 +708,7 @@ class DatabaseInitializer:
                 account_id VARCHAR(80) NOT NULL COMMENT '账号标识',
                 item_id VARCHAR(64) DEFAULT NULL COMMENT '商品ID(空为账号默认回复)',
                 enabled TINYINT(1) DEFAULT 0 COMMENT '是否启用',
-                reply_type VARCHAR(32) DEFAULT 'text' COMMENT '回复类型：text-文本，api-接口，external_contact-站外联系方式',
+                reply_type VARCHAR(32) DEFAULT 'text' COMMENT '回复类型：text-文本，api-接口',
                 reply_content TEXT COMMENT '回复内容',
                 reply_image VARCHAR(512) COMMENT '回复图片URL',
                 api_url VARCHAR(1024) DEFAULT NULL COMMENT 'API地址(reply_type=api时POST此地址)',
@@ -2094,7 +2094,7 @@ class DatabaseInitializer:
         "xy_default_replies": [
             ("item_id", "VARCHAR(64) DEFAULT NULL COMMENT '商品ID'", "account_id"),
             ("reply_image", "VARCHAR(512) COMMENT '回复图片URL'", "reply_content"),
-            ("reply_type", "VARCHAR(32) DEFAULT 'text' COMMENT '回复类型：text-文本，api-接口，external_contact-站外联系方式'", "enabled"),
+            ("reply_type", "VARCHAR(32) DEFAULT 'text' COMMENT '回复类型：text-文本，api-接口'", "enabled"),
             ("api_url", "VARCHAR(1024) DEFAULT NULL COMMENT 'API地址(reply_type=api时POST此地址)'", "reply_image"),
             ("api_timeout", "INT DEFAULT 80 COMMENT 'API请求超时时间(秒)'", "api_url"),
         ],
@@ -2349,7 +2349,7 @@ class DatabaseInitializer:
                         exists = result.scalar() > 0
 
                         # Existing installations may have the original VARCHAR(16) reply type.
-                        # Expand it before storing external_contact.
+                        # Widen it so all supported reply types fit.
                         if exists and table_name == "xy_default_replies" and col_name == "reply_type":
                             length_result = await conn.execute(text("""
                                 SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS

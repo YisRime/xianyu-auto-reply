@@ -36,7 +36,7 @@ class XYKeywordRule(TimestampMixin, Base):
     )
     keyword: Mapped[str] = mapped_column(String(120), nullable=False, comment='关键词')
     reply_content: Mapped[str | None] = mapped_column(Text, comment='回复内容')
-    reply_type: Mapped[str | None] = mapped_column(String(32), comment='回复类型(text/image/external_contact)')
+    reply_type: Mapped[str | None] = mapped_column(String(32), comment='回复类型(text/image)')
     image_url: Mapped[str | None] = mapped_column(String(512), comment='图片URL')
     item_id: Mapped[str | None] = mapped_column(String(64), comment='商品ID')
     priority: Mapped[int] = mapped_column(Integer, default=100, comment='优先级')

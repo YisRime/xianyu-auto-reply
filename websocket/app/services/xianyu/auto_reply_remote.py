@@ -8,10 +8,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.user_setting import UserSetting
-from common.services.remote_location_message_api import (
-    RemoteLocationMessageError,
-    fetch_remote_location_message,
-)
 from common.utils.default_reply_api import call_reply_api
 
 

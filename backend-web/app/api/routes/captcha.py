@@ -9,12 +9,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.routes.captcha_email import (
-    SendCodeRequest,
-    send_email_verification_code,
-    verify_email_code,
-    router as email_router,
-)
 from app.api.routes.captcha_image import (
     CaptchaRequest,
     VerifyCaptchaRequest,
@@ -46,5 +40,4 @@ from common.services.email_verification_code_service import (
 
 router = APIRouter(prefix="/captcha", tags=["验证码"])
 router.include_router(image_router)
-router.include_router(email_router)
 router.include_router(remote_router)

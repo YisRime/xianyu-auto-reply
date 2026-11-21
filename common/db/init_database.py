@@ -29,7 +29,6 @@ from common.db.default_publish_addresses import (
 )
 from common.db.auto_relist_schema import ensure_auto_relist_schema
 from common.db.scheduled_publish_rule_schema import ensure_scheduled_publish_rule_schema
-from common.db.payment_schema import ensure_payment_schema
 from common.db.item_query_indexes import ensure_item_query_indexes
 from common.db.api_keyword_schema import ensure_api_keyword_schema
 from common.db.notification_schema import ensure_notification_schema
@@ -2166,10 +2165,6 @@ class DatabaseInitializer:
 
                     # 1.1 初始化所有枚举数据字典
                     await self.init_data_dictionaries()
-
-                    # 支付表结构是回调入账和幂等处理的前置条件，缺失时禁止带病启动。
-                    async with ddl_connection() as conn:
-                        await ensure_payment_schema(conn)
 
                     # 自动续售表和发布日志关联字段独立幂等迁移，避免依赖旧版本 DDL 顺序。
                     async with ddl_connection() as conn:

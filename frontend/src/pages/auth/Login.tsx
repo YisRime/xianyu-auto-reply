@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Lock, Mail, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { AuthNavbar } from '@/components/common/AuthNavbar'
@@ -11,7 +11,6 @@ import { ButtonLoading } from '@/components/common/Loading'
 import { GeetestCaptcha, type GeetestResult } from '@/components/common/GeetestCaptcha'
 import { LoginBrandingPanel, LoginMobileBranding } from './LoginBranding'
 import { useLoginPageSettings } from './useLoginPageSettings'
-import { useRegistrationStatus } from './useRegistrationStatus'
 
 type LoginType = 'username' | 'email-password' | 'email-code'
 
@@ -23,7 +22,6 @@ export function Login() {
   const [loginType, setLoginType] = useState<LoginType>('username')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const { enabled: registrationEnabled } = useRegistrationStatus()
   const { showDefaultLogin, loginCaptchaEnabled, loginBranding } = useLoginPageSettings(isAuthenticated)
 
   // Form states
@@ -452,17 +450,6 @@ export function Login() {
               </button>
             </form>
 
-            {/* Forgot password + Register links */}
-            <div className="flex items-center justify-between mt-6 text-sm">
-              <Link to="/forgot-password" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">
-                忘记密码?
-              </Link>
-              {registrationEnabled && (
-                <Link to="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300">
-                  立即注册
-                </Link>
-              )}
-            </div>
 
             {/* Default credentials */}
             {showDefaultLogin && (

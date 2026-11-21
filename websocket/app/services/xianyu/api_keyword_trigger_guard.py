@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from loguru import logger
 
-from common.db.redis_client import DistributedLock, get_redis_client
+from common.db.kv_store import DistributedLock, get_redis_client
 from common.services.api_keyword_trigger import check_api_keyword_trigger
 from common.utils.time_utils import get_beijing_now_naive
 
@@ -75,7 +75,7 @@ class ApiKeywordTriggerGuard:
 
     async def _recover_pending_log(self) -> None:
         """持锁补记之前未落库的成功日志；失败拒绝新请求，返回后才核对触发次数。"""
-        client = await get_redis_client()
+        client = await get_kv_store()
         pending = await client.get(self.pending_log_key)
         if pending is None:
             return
@@ -102,7 +102,7 @@ class ApiKeywordTriggerGuard:
             raise ValueError("API关键词成功消息缺少触发日志标识，请核对消息记录")
         self.trace.setdefault("context_snapshot", {}).setdefault("api_keyword_log_created_at", get_beijing_now_naive().isoformat())
         payload = self.service.auto_reply_log_service._normalize_json_value(self.trace)
-        client = await get_redis_client()
+        client = await get_kv_store()
         # 不设过期时间，成功日志补记完成后才移除，避免数据库故障期间重复消耗额度。
         saved = await client.set(self.pending_log_key, json.dumps(payload, ensure_ascii=False), nx=True)
         if not saved:

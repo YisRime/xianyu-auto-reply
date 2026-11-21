@@ -28,7 +28,7 @@ from app.services.account_service import AccountService
 from app.services.chat_new import get_im_session_manager
 from app.services.chat_new.avatar_service import get_owner_user_info, get_user_info, AVATAR_CACHE_PREFIX, AVATAR_CACHE_TTL
 from app.services.chat_new.official_blacklist_service import official_blacklist_request
-from common.db.redis_client import get_redis_client
+from common.db.kv_store import get_kv_store
 from common.models import User, XYAccount
 from common.schemas.common import ApiResponse
 from common.utils.auth_scope import is_admin_user
@@ -290,7 +290,7 @@ async def get_conversations(
 
         # 从 Redis 批量读取所有会话的缓存，按优先级确定昵称并回写更优数据
         try:
-            redis_client = await get_redis_client()
+            redis_client = await get_kv_store()
             read_pipe = redis_client.pipeline()
             for c in conversations:
                 read_pipe.get(f"{AVATAR_CACHE_PREFIX}{c['cid']}")

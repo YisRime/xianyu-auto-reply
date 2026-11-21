@@ -1,47 +1,19 @@
-"""认证限流：使用全局 Redis 池，对注册、验证码发送和登录失败原子计数。"""
+"""认证限流：对注册、验证码发送和登录失败计数，底层为 MySQL 键值存储。"""
 from __future__ import annotations
 
 import hashlib
+import json
+import time
 import uuid
 from dataclasses import dataclass
 
-from common.db.redis_client import get_redis_client
-from common.services.redis_rate_limit_service import check_sliding_window_limit
+from common.db.kv_store import get_kv_store
+from common.services.rate_limit_service import check_sliding_window_limit
 
-# 登录先占位以避免并发绕过；成功清除失败记录，保留其他正在执行的请求。
-LOGIN_BEGIN_SCRIPT = """
-local clock = redis.call('TIME')
-local now = tonumber(clock[1]) * 1000 + math.floor(tonumber(clock[2]) / 1000)
-local member = 'p:' .. ARGV[1]
-if redis.call('ZSCORE', KEYS[1], member) then return 0 end
-for i, key in ipairs(KEYS) do
-    redis.call('ZREMRANGEBYSCORE', key, '-inf', now - 600000)
-    local limit = i == 1 and 20 or 10
-    if redis.call('ZCARD', key) >= limit then return i end
-end
-for _, key in ipairs(KEYS) do
-    redis.call('ZADD', key, now, member)
-    redis.call('PEXPIRE', key, 600000)
-end
-return 0
-"""
-LOGIN_FINISH_SCRIPT = """
-local member = 'p:' .. ARGV[1]
-for _, key in ipairs(KEYS) do
-    local score = redis.call('ZSCORE', key, member)
-    redis.call('ZREM', key, member)
-    if score and ARGV[2] == 'success' then
-        local members = redis.call('ZRANGE', key, 0, -1)
-        for _, entry in ipairs(members) do
-            if string.sub(entry, 1, 2) == 'f:' then redis.call('ZREM', key, entry) end
-        end
-    elseif score then
-        redis.call('ZADD', key, score, 'f:' .. ARGV[1])
-        redis.call('PEXPIRE', key, 600000)
-    end
-end
-return 1
-"""
+# 登录失败统计窗口与维度上限（IP 20 次 / 身份 10 次，窗口 10 分钟）
+LOGIN_WINDOW_SECONDS = 600
+LOGIN_IP_LIMIT = 20
+LOGIN_IDENTITY_LIMIT = 10
 
 
 class AuthRateLimitRejected(ValueError):
@@ -52,39 +24,71 @@ class AuthRateLimitRejected(ValueError):
 
 @dataclass(frozen=True)
 class LoginAttempt:
-    """一次登录占位的哈希键与唯一标识，不在 Redis 键中存储原始身份。"""
+    """一次登录占位的哈希键与唯一标识，键中不存储原始身份。"""
 
     keys: tuple[str, ...]
     request_id: str
 
 
 def _identity_key(namespace: str, identity: str) -> str:
-    """构造认证计数键；参数为命名空间和身份，返回 SHA256 哈希后的 Redis 键。"""
-    digest = hashlib.sha256(identity.strip().casefold().encode('utf-8')).hexdigest()
+    """构造认证计数键；参数为命名空间和身份，返回 SHA256 哈希后的键。"""
+    digest = hashlib.sha256(identity.strip().casefold().encode("utf-8")).hexdigest()
     return f"rate:auth:{namespace}:{digest}"
 
 
+async def _load_entries(key: str) -> list[dict]:
+    """读取某个计数键在窗口内的占位与失败记录。"""
+    store = await get_kv_store()
+    raw = await store.get(key)
+    try:
+        entries = json.loads(raw) if raw else []
+    except (TypeError, ValueError):
+        entries = []
+    deadline = int(time.time() * 1000) - LOGIN_WINDOW_SECONDS * 1000
+    return [item for item in entries if int(item.get("ts", 0)) > deadline]
+
+
+async def _save_entries(key: str, entries: list[dict]) -> None:
+    """写回计数键并续期。"""
+    store = await get_kv_store()
+    await store.set(key, json.dumps(entries), ex=LOGIN_WINDOW_SECONDS)
+
+
 async def begin_login_attempt(ip: str | None, account: str, email: str | None = None) -> LoginAttempt:
-    """检查并占用 IP/账号/绑定邮箱额度；超限抛出业务错误，Redis 异常由入口处理。"""
+    """检查并占用 IP/账号/绑定邮箱额度；超限抛出业务错误。"""
     keys = [_identity_key('login:ip', ip or 'unknown'), _identity_key('login:identity', account)]
     if email:
         keys.append(_identity_key('login:identity', email))
     attempt = LoginAttempt(tuple(dict.fromkeys(keys)), uuid.uuid4().hex)
-    client = await get_redis_client()
-    blocked = int(await client.eval(LOGIN_BEGIN_SCRIPT, len(attempt.keys), *attempt.keys, attempt.request_id))
-    if blocked:
-        dimension = "当前 IP" if blocked == 1 else "该账号或邮箱"
-        raise AuthRateLimitRejected(f"{dimension}登录失败次数过多，请10分钟后再试")
+    now_ms = int(time.time() * 1000)
+
+    for index, key in enumerate(attempt.keys):
+        entries = await _load_entries(key)
+        if any(item.get("id") == attempt.request_id for item in entries):
+            return attempt
+        limit = LOGIN_IP_LIMIT if index == 0 else LOGIN_IDENTITY_LIMIT
+        if len(entries) >= limit:
+            dimension = "当前 IP" if index == 0 else "该账号或邮箱"
+            raise AuthRateLimitRejected(f"{dimension}登录失败次数过多，请10分钟后再试")
+
+    for key in attempt.keys:
+        entries = await _load_entries(key)
+        entries.append({"id": attempt.request_id, "ts": now_ms, "kind": "p"})
+        await _save_entries(key, entries)
     return attempt
 
 
 async def finish_login_attempt(attempt: LoginAttempt, *, success: bool) -> None:
-    """结束本次登录占位；失败保留计数，成功清除对应维度的失败计数。"""
-    client = await get_redis_client()
-    await client.eval(
-        LOGIN_FINISH_SCRIPT, len(attempt.keys), *attempt.keys,
-        attempt.request_id, 'success' if success else 'failure',
-    )
+    """结束本次登录占位；成功清除失败计数，失败仅保留占位为失败记录。"""
+    now_ms = int(time.time() * 1000)
+    for key in attempt.keys:
+        entries = await _load_entries(key)
+        entries = [item for item in entries if item.get("id") != attempt.request_id]
+        if success:
+            entries = [item for item in entries if item.get("kind") != "f"]
+        else:
+            entries.append({"id": attempt.request_id, "ts": now_ms, "kind": "f"})
+        await _save_entries(key, entries)
 
 
 async def check_registration_limit(ip: str | None, email: str) -> None:

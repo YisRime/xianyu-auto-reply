@@ -854,7 +854,7 @@ class OrderService:
         Returns:
             { total_fetched, new_inserted, updated, failed, errors }
         """
-        from common.db.redis_client import distributed_lock
+        from common.db.kv_store import distributed_lock
 
         account_id = account.account_id
         lock_name = f"order_sync:{account_id}"
@@ -1622,7 +1622,7 @@ class OrderService:
         Returns:
             { total_fetched, updated, failed, errors }
         """
-        from common.db.redis_client import distributed_lock
+        from common.db.kv_store import distributed_lock
 
         account_id = account.account_id
         # 独立锁：避免与「获取闲鱼订单/待发货订单」抢同一账号锁导致退款任务被跳过（达不到2分钟一次）。

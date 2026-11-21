@@ -32,7 +32,7 @@ from app.services.db_backup_log_service import DbBackupLogService
 from app.services.system_setting_service import SystemSettingService
 from common.db.error_messages import get_public_database_error_message
 from common.db.init_database import init_database
-from common.db.redis_client import close_redis_client, initialize_redis_client
+from common.db.kv_store import close_kv_store, get_kv_store
 from common.db.session import async_session_maker
 from common.utils.logging_utils import setup_logging
 from common.utils.network_utils import resolve_listen_host
@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
 
     # 初始化 Redis 健康连接池；失败时按指数退避重试，最终失败则停止启动。
     try:
-        await initialize_redis_client()
+        await get_kv_store()
     except Exception:
         logger.exception("Redis连接初始化失败，服务退出")
         raise
@@ -98,7 +98,7 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception("数据库初始化失败，服务退出")
         try:
-            await close_redis_client()
+            await close_kv_store()
         except Exception:
             logger.exception("数据库初始化失败后关闭Redis连接失败")
         raise
@@ -195,7 +195,7 @@ async def lifespan(app: FastAPI):
 
     # 先释放Redis客户端，再断开全局连接池
     try:
-        await close_redis_client()
+        await close_kv_store()
     except Exception:
         logger.exception("关闭Redis连接失败")
 

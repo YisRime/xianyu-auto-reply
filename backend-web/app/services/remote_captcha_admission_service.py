@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.risk_control_log_service import RiskControlLogService
 from app.services.system_setting_service import SystemSettingService
-from common.db.redis_client import DistributedLock
+from common.db.kv_store import DistributedLock
 from common.models.system_setting import SystemSetting
 
 

@@ -512,6 +512,27 @@ class DatabaseInitializer:
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
         """,
 
+        # 1.1 通用键值存储（替代 Redis 缓存与限流计数）
+        "xy_kv_store": """
+            CREATE TABLE IF NOT EXISTS xy_kv_store (
+                k VARCHAR(255) PRIMARY KEY COMMENT '键',
+                v LONGTEXT COMMENT '值',
+                expires_at BIGINT DEFAULT NULL COMMENT '过期时间戳(秒)，NULL=永不过期',
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                INDEX idx_kv_expires (expires_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通用键值存储';
+        """,
+
+        # 1.2 跨进程分布式锁（替代 Redis 分布式锁）
+        "xy_distributed_locks": """
+            CREATE TABLE IF NOT EXISTS xy_distributed_locks (
+                lock_name VARCHAR(255) PRIMARY KEY COMMENT '锁名称',
+                owner VARCHAR(64) NOT NULL COMMENT '持有者令牌',
+                expires_at BIGINT NOT NULL COMMENT '锁过期时间戳(秒)',
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='跨进程分布式锁';
+        """,
+
         # 2. 用户设置表
         "xy_user_settings": """
             CREATE TABLE IF NOT EXISTS xy_user_settings (
@@ -3825,9 +3846,9 @@ class DatabaseInitializer:
         logger.info("初始化Redis平台日...")
         
         try:
-            from common.db.redis_client import get_redis_client
+            from common.db.kv_store import get_kv_store
             
-            redis_client = await get_redis_client()
+            redis_client = await get_kv_store()
             platform_day_key = "platform:day"
             
             # 检查Redis中是否已存在平台日

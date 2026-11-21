@@ -587,7 +587,7 @@ async def manual_delivery(
         
         # 调用WebSocket服务的内部API进行发货前获取订单级分布式锁。
         # 自动发货和定时补发也使用同一把锁，避免多个入口同时消费卡券。
-        from common.db.redis_client import try_acquire_delivery_lock, release_delivery_lock
+        from common.db.kv_store import try_acquire_delivery_lock, release_delivery_lock
         delivery_lock = None
         redis_lock_acquired = False
         try:

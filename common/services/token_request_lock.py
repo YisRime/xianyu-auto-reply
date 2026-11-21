@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager, suppress
 
 from loguru import logger
 
-from common.db.redis_client import DistributedLock
+from common.db.kv_store import DistributedLock
 
 
 TOKEN_REQUEST_LOCK_EXPIRE_SECONDS = 600

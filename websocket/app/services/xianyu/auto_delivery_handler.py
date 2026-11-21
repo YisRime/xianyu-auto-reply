@@ -1193,7 +1193,7 @@ class AutoDeliveryHandler(DeliveryPrecheckMixin):
                 return
 
             # 使用Redis分布式锁（跨进程并发控制，Redis失败时降级为仅本地锁）
-            from common.db.redis_client import try_acquire_delivery_lock
+            from common.db.kv_store import try_acquire_delivery_lock
             
             lock_result = None
             redis_lock_acquired = False
@@ -1962,7 +1962,7 @@ class AutoDeliveryHandler(DeliveryPrecheckMixin):
                 # 处理完成后主动释放Redis分布式锁
                 if redis_lock_acquired and lock_result:
                     try:
-                        from common.db.redis_client import release_delivery_lock
+                        from common.db.kv_store import release_delivery_lock
                         released = await release_delivery_lock(lock_result)
                         if released:
                             logger.info(f'[{msg_time}] 【{self.cookie_id}】Redis分布式锁已释放: {order_id}')

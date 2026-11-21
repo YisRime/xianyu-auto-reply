@@ -19,7 +19,7 @@ from loguru import logger
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from common.db.redis_client import get_redis_client
+from common.db.kv_store import get_kv_store
 from common.models.xy_account import XYAccount
 from common.utils.xianyu_utils import generate_sign, trans_cookies
 
@@ -59,7 +59,7 @@ async def get_user_info(
     # 1. 检查 Redis 缓存
     cache_key = f"{AVATAR_CACHE_PREFIX}{cid}"
     try:
-        redis = await get_redis_client()
+        redis = await get_kv_store()
         cached = await redis.get(cache_key)
         if cached:
             try:
@@ -89,7 +89,7 @@ async def get_user_info(
     # 3. 写入 Redis 缓存
     if user_info:
         try:
-            redis = await get_redis_client()
+            redis = await get_kv_store()
             await redis.set(cache_key, json.dumps(user_info, ensure_ascii=False), ex=AVATAR_CACHE_TTL)
         except Exception as e:
             logger.warning(f"【{account_id}】Redis写入用户信息缓存失败: {e}")

@@ -7,7 +7,7 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from common.db.redis_client import distributed_lock
+from common.db.kv_store import distributed_lock
 from common.models.default_reply import DefaultReply, DefaultReplyRecord
 
 

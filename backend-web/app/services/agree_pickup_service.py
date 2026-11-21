@@ -21,7 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.websocket_client import websocket_client
-from common.db.redis_client import release_delivery_lock, try_acquire_delivery_lock
+from common.db.kv_store import release_delivery_lock, try_acquire_delivery_lock
 from common.models.xy_order import XYOrder
 from common.services.order_service import OrderService
 from common.utils.xianyu_utils import canonical_goofish_item_url

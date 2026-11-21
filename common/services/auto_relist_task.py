@@ -11,7 +11,7 @@ from loguru import logger
 from sqlalchemy import select, update
 
 from common.core.config import get_settings
-from common.db.redis_client import distributed_lock
+from common.db.kv_store import distributed_lock
 from common.db.session import async_session_maker
 from common.models.auto_relist_event import AutoRelistEvent
 from common.models.auto_relist_rule import AutoRelistRule

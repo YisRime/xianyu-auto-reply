@@ -21,7 +21,7 @@ from loguru import logger
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from common.db.redis_client import distributed_lock
+from common.db.kv_store import distributed_lock
 from common.db.session import async_session_maker
 from common.models.product_material import ProductMaterial
 from common.models.scheduled_publish_record import ScheduledPublishRecord

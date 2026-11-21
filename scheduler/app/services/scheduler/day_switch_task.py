@@ -14,7 +14,7 @@ from loguru import logger
 from sqlalchemy import text
 
 from common.db.session import async_session_maker
-from common.db.redis_client import get_redis_client
+from common.db.kv_store import get_kv_store
 from common.utils.time_utils import get_beijing_now_naive
 
 
@@ -78,7 +78,7 @@ class DaySwitchTaskService:
             平台日字符串（yyyy-MM-dd格式），如果不存在返回None
         """
         try:
-            redis_client = await get_redis_client()
+            redis_client = await get_kv_store()
             platform_day = await redis_client.get(self.PLATFORM_DAY_KEY)
             return platform_day
         except Exception as e:
@@ -96,7 +96,7 @@ class DaySwitchTaskService:
             是否更新成功
         """
         try:
-            redis_client = await get_redis_client()
+            redis_client = await get_kv_store()
             await redis_client.set(self.PLATFORM_DAY_KEY, new_day)
             logger.debug(f"【{self.task_name}】Redis平台日已更新: {new_day}")
             return True

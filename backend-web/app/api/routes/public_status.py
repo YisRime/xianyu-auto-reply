@@ -10,7 +10,7 @@ from loguru import logger
 
 from app.services.public_status_service import get_public_status
 from common.schemas.common import ApiResponse
-from common.services.redis_rate_limit_service import check_sliding_window_limit
+from common.services.rate_limit_service import check_sliding_window_limit
 from common.utils.http_utils import get_client_ip
 
 router = APIRouter(prefix="/public", tags=["公开状态"])

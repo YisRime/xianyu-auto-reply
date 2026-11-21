@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from loguru import logger
 
-from common.db.redis_client import release_delivery_lock, try_acquire_delivery_lock
+from common.db.kv_store import release_delivery_lock, try_acquire_delivery_lock
 
 
 class ApiKeywordOrderBusy(ValueError):

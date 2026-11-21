@@ -391,7 +391,7 @@ class RedeliveryTask:
         logger.info(f"[定时补发货] 开始处理订单: {order_no}，当前状态: {order.status}")
         
         # 获取Redis分布式锁（防止与自动发货并发，Redis失败时降级继续执行）
-        from common.db.redis_client import try_acquire_delivery_lock
+        from common.db.kv_store import try_acquire_delivery_lock
         
         lock_result = None
         redis_lock_acquired = False
@@ -704,7 +704,7 @@ class RedeliveryTask:
             # 主动释放Redis分布式锁
             if redis_lock_acquired and lock_result:
                 try:
-                    from common.db.redis_client import release_delivery_lock
+                    from common.db.kv_store import release_delivery_lock
                     released = await release_delivery_lock(lock_result)
                     if released:
                         logger.debug(f"[定时补发货] Redis分布式锁已释放: {order_no}")

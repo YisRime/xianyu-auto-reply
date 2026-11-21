@@ -33,7 +33,7 @@ from app.services.service_health import check_database_connection
 from app.services.xianyu.cookie_manager import get_manager
 from common.db.init_database import ddl_connection, init_advisory_lock
 from common.db.notification_schema import ensure_notification_schema
-from common.db.redis_client import close_redis_client, initialize_redis_client
+from common.db.kv_store import close_kv_store, get_kv_store
 from common.services.cookie_renew_browser_service import enable_local_browser_renew
 from common.services.order_service import close_goofish_connector
 from common.services.captcha.slider_mode import refresh_slider_mode_from_database
@@ -82,7 +82,7 @@ async def lifespan(app: FastAPI):
 
     # 初始化 Redis 健康连接池；失败时按指数退避重试，最终失败则停止启动。
     try:
-        await initialize_redis_client()
+        await get_kv_store()
     except Exception:
         logger.exception("Redis连接初始化失败，服务退出")
         raise
@@ -129,7 +129,7 @@ async def lifespan(app: FastAPI):
         logger.info("goofish API 连接池已关闭")
         # 先释放Redis客户端，再断开全局连接池。
         try:
-            await close_redis_client()
+            await close_kv_store()
         except Exception:
             logger.exception("关闭Redis连接失败")
 

@@ -18,7 +18,7 @@ const PAYMENT_TYPE_KEY = 'payment_type'
 
 export function usePersonalSettingsData() {
   const { addToast } = useUIStore()
-  const { isAuthenticated, token, _hasHydrated, user, clearAuth } = useAuthStore()
+  const { isAuthenticated, token, _hasHydrated, user } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [balance, setBalance] = useState('')
   const [showRecharge, setShowRecharge] = useState(false)
@@ -161,8 +161,7 @@ export function usePersonalSettingsData() {
         setConfirmPassword('')
         // 延迟1秒后退出登录
         setTimeout(() => {
-          clearAuth()
-          window.location.href = '/login'
+          window.location.reload()
         }, 1000)
       } else {
         addToast({ type: 'error', message: result.message || '密码修改失败' })

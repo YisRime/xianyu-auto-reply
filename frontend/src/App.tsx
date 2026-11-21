@@ -10,7 +10,6 @@ import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
 import { applyThemeSettings, initializeThemeMode } from '@/utils/theme'
 
 // 登录/注册/激活码页面保持同步导入（首屏必需）
-import { Login } from '@/pages/auth/Login'
 
 // 页面组件懒加载，按需加载提升首屏速度
 const Dashboard = React.lazy(() => import('@/pages/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -220,7 +219,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (authState === 'unauthenticated') {
-    return <Navigate to="/login" replace />
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">无法自动登录，请确认后端服务已启动</p>
+        <button type="button" onClick={() => window.location.reload()} className="btn-ios-primary">
+          重新加载
+        </button>
+      </div>
+    )
   }
 
   if (isPathBlockedForUser(location.pathname, hiddenMenuKeys, Boolean(user?.is_admin), isExeMode)) {
@@ -268,7 +274,6 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/about-public" element={<PublicAbout />} />
           {/* 兼职端扫码页面：无需登录，公开访问 */}
           <Route path="/shared-scan-page" element={<SharedScanPage />} />

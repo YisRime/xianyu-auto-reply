@@ -11,7 +11,7 @@ interface TopNavbarProps {
 
 export function TopNavbar({ systemName = '闲鱼管理系统' }: TopNavbarProps) {
   const navigate = useNavigate()
-  const { user, clearAuth } = useAuthStore()
+  const { user } = useAuthStore()
   const [isDark, setIsDark] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
 
@@ -26,11 +26,6 @@ export function TopNavbar({ systemName = '闲鱼管理系统' }: TopNavbarProps)
 
   const toggleTheme = () => {
     setIsDark(toggleThemeMode() === 'dark')
-  }
-
-  const handleLogout = () => {
-    clearAuth()
-    navigate('/login')
   }
 
 
@@ -109,7 +104,6 @@ export function TopNavbar({ systemName = '闲鱼管理系统' }: TopNavbarProps)
                   个人设置
                 </button>
                 <button
-                  onClick={handleLogout}
                   className={cn(
                     'w-full flex items-center gap-2 px-4 py-2 text-sm',
                     'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20',

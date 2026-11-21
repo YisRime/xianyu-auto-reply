@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from loguru import logger
-from app.services.login_flow_service import perform_login
 from common.services.auth_rate_limit_service import AuthRateLimitRejected, check_registration_limit
 from common.db.session_recovery import rollback_session
 from common.services.email_domain_policy import EmailDomainRejected, enforce_email_domain
@@ -38,18 +37,6 @@ class ResetPasswordRequest(BaseModel):
     email: str
     verification_code: str
     new_password: str
-
-
-@router.post("/login", response_model=LoginResponse)
-async def login_user(
-    payload: LoginRequest,
-    request: Request,
-    auth_service: AuthService = Depends(deps.get_auth_service),
-    session: AsyncSession = Depends(deps.get_db_session),
-    login_log_service: UserLoginLogService = Depends(deps.get_user_login_log_service),
-) -> LoginResponse:
-    """调用统一登录流程，先校验后缀与限流，再认证并提交审计日志。"""
-    return await perform_login(payload, get_client_ip(request), auth_service, session, login_log_service)
 
 
 @router.post("/local-auto-login", response_model=LoginResponse)
@@ -122,11 +109,6 @@ async def verify_token(
         is_admin=user.role == UserRole.ADMIN,
         account_limit=user.account_limit,
     )
-
-
-@router.post("/logout", response_model=ApiResponse)
-async def logout_user() -> ApiResponse:
-    return ApiResponse(success=True, message="已退出登录")
 
 
 @router.post("/refresh", response_model=LoginResponse)

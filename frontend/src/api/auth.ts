@@ -1,12 +1,10 @@
 import { post, get } from '@/utils/request'
 
 import { normalizeLoginBrandingSettings } from '@/api/settings'
-import type { LoginBrandingSettings, LoginRequest, LoginResponse, ApiResponse } from '@/types'
+import type { LoginBrandingSettings, LoginResponse, ApiResponse } from '@/types'
 
 const AUTH_PREFIX = '/api/v1/auth'
 const SYSTEM_PREFIX = '/api/v1/system-settings'
-const CAPTCHA_PREFIX = '/api/v1/captcha'
-const GEETEST_PREFIX = '/api/v1/geetest'
 
 // 缓存公共设置，避免重复请求
 let publicSettingsCache: Record<string, unknown> | null = null
@@ -38,11 +36,6 @@ const getPublicSettings = async (): Promise<Record<string, unknown>> => {
 }
 
 // 用户登录
-export const login = (data: LoginRequest): Promise<LoginResponse> => {
-  return post(`${AUTH_PREFIX}/login`, data)
-}
-
-// 本机免密登录（仅限本机访问，用于跳过登录页）
 export const localAutoLogin = (): Promise<LoginResponse> => {
   return post(`${AUTH_PREFIX}/local-auto-login`, {})
 }
@@ -53,152 +46,15 @@ export const verifyToken = (): Promise<{ authenticated: boolean; user_id?: numbe
 }
 
 // 用户登出
-export const logout = (): Promise<ApiResponse> => {
-  return post(`${AUTH_PREFIX}/logout`)
-}
-
-// 获取注册状态 - 从系统设置获取
-export const getRegistrationStatus = async (): Promise<{ enabled: boolean }> => {
-  // 注册开关实时读取，避免登录页的设置缓存保留管理员修改前的状态。
-  const response = await get<unknown>(`${SYSTEM_PREFIX}/public`)
-  if (!response || typeof response !== 'object' || Array.isArray(response)) {
-    throw new Error('注册状态响应格式异常，请稍后重试')
-  }
-  const settings = response as Record<string, unknown>
-  if (settings.success === false) {
-    throw new Error(typeof settings.message === 'string' && settings.message.trim() ? settings.message : '读取注册状态失败，请稍后重试')
-  }
-  // 后端统一返回 true/false，兼容旧客户端的布尔值与 0/1；缺失或非法值是读取错误。
-  const value = settings.registration_enabled
-  if (![true, false, 'true', 'false', 1, 0, '1', '0'].includes(value as string | number | boolean)) {
-    throw new Error('注册状态响应缺失或取值异常，请稍后重试')
-  }
-  return { enabled: value === true || value === 'true' || value === 1 || value === '1' }
-}
-
-// 获取登录信息显示状态 - 从系统设置获取
-export const getLoginInfoStatus = async (): Promise<{ enabled: boolean }> => {
-  const settings = await getPublicSettings()
-  // 处理多种可能的值类型：true, 'true', 1, '1'
-  const value = settings.show_default_login_info
-  return { enabled: value === true || value === 'true' || value === 1 || value === '1' }
-}
-
-// 获取登录验证码开关状态
-export const getLoginCaptchaStatus = async (): Promise<{ enabled: boolean }> => {
-  const settings = await getPublicSettings()
-  const value = settings.login_captcha_enabled
-  // 如果没有设置，默认开启
-  if (value === undefined || value === null) {
-    return { enabled: true }
-  }
-  return { enabled: value === true || value === 'true' || value === 1 || value === '1' }
-}
-
-// 获取登录页品牌配置
 export const getLoginBrandingSettings = async (): Promise<LoginBrandingSettings> => {
   const settings = await getPublicSettings()
   return normalizeLoginBrandingSettings(settings)
 }
 
 // 生成图形验证码
-export const generateCaptcha = async (sessionId: string): Promise<{ success: boolean; captcha_image?: string }> => {
-  const result = await post<{ success: boolean; data: { captcha_image: string; session_id: string }; message: string }>(
-    `${CAPTCHA_PREFIX}/generate`,
-    { session_id: sessionId }
-  )
-  return { success: result.success, captcha_image: result.data?.captcha_image }
-}
-
-// 验证图形验证码
-export const verifyCaptcha = async (sessionId: string, captchaCode: string): Promise<{ success: boolean }> => {
-  const result = await post<{ success: boolean; message: string }>(
-    `${CAPTCHA_PREFIX}/verify`,
-    { session_id: sessionId, captcha_code: captchaCode }
-  )
-  return { success: result.success }
-}
-
-// 发送邮箱验证码
-export const sendVerificationCode = async (email: string, type: string, sessionId: string): Promise<ApiResponse> => {
-  return post(`${CAPTCHA_PREFIX}/send-email-code`, { email, type, session_id: sessionId })
-}
-
-// 用户注册 - 使用新后端接口
-export const register = (data: { 
-  username: string
-  password: string
-  email?: string
-  verification_code?: string
-  session_id?: string
-}): Promise<ApiResponse> => {
-  return post(`${AUTH_PREFIX}/register`, {
-    username: data.username,
-    password: data.password,
-    email: data.email,
-    verification_code: data.verification_code,
-  })
-}
-
-// ==================== 极验滑动验证码 ====================
-
-// 极验验证码初始化响应类型
-interface GeetestRegisterResponse {
-  success: boolean
-  code: number
-  message: string
-  data?: {
-    success: number
-    gt: string
-    challenge: string
-    new_captcha: boolean
-  }
-}
-
-// 极验二次验证响应类型
-interface GeetestValidateResponse {
-  success: boolean
-  code: number
-  message: string
-}
-
-// 获取极验验证码初始化参数
-export const getGeetestRegister = (): Promise<GeetestRegisterResponse> => {
-  return get(`${GEETEST_PREFIX}/register`)
-}
-
-// 极验二次验证
-export const geetestValidate = (data: {
-  challenge: string
-  validate: string
-  seccode: string
-}): Promise<GeetestValidateResponse> => {
-  return post(`${GEETEST_PREFIX}/validate`, data)
-}
-
-// 检查管理员密码是否为默认值
 export const checkAdminDefaultPassword = (): Promise<ApiResponse<{ is_default: boolean }>> => {
   return get(`${AUTH_PREFIX}/check-default-password`)
 }
 
 
 // 发送重置密码验证码
-export const sendResetPasswordCode = async (
-  email: string,
-  geetest?: { challenge: string; validate: string; seccode: string }
-): Promise<ApiResponse> => {
-  const sessionId = `reset_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`
-  return post(`${CAPTCHA_PREFIX}/send-email-code`, {
-    email,
-    type: 'reset_password',
-    session_id: sessionId,
-    geetest_challenge: geetest?.challenge,
-    geetest_validate: geetest?.validate,
-    geetest_seccode: geetest?.seccode,
-  })
-}
-
-// 重置密码
-export const resetPassword = (data: { email: string; verification_code: string; new_password: string }): Promise<ApiResponse> => {
-  return post(`${AUTH_PREFIX}/reset-password`, data)
-}

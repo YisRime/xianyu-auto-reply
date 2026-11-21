@@ -259,7 +259,6 @@ export interface ThemeFontSettings {
 export type ThemeSettings = ThemeAppearanceSettings & ThemeFontSettings
 export type PasswordLoginMode = 'protocol' | 'browser'
 export type SliderMode = 'browser' | 'real_mouse'
-export type TokenApiMode = 'web' | 'remote'
 export type PaymentChannel = 'alipay' | 'zzcode'
 export type ZzcodePayType = 'alipay' | 'wxpay' | 'qqpay'
 
@@ -326,7 +325,6 @@ export interface SystemSettings {
   'password_login.remote_secret_key'?: string
   'captcha.slider_mode'?: SliderMode
   // Token获取方式
-  'token.api_mode'?: TokenApiMode
   'token.remote_url'?: string
   'token.remote_secret_key'?: string
   // 代理设置

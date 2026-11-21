@@ -7,7 +7,6 @@ import type { SystemSettings } from '@/types'
 import { MenuVisibilitySettings } from './MenuVisibilitySettings'
 import { PasswordLoginModeSetting } from './PasswordLoginModeSetting'
 import { SliderModeSetting } from './SliderModeSetting'
-import { TokenApiModeSetting } from './TokenApiModeSetting'
 import type { SetSystemSettings } from './settingsTypes'
 
 interface BasicSettingsTabProps {
@@ -99,17 +98,6 @@ export function BasicSettingsTab({
           <SliderModeSetting
             value={settings?.['captcha.slider_mode']}
             onSaved={(mode) => setSettings((current) => current ? { ...current, 'captcha.slider_mode': mode } : current)}
-          />
-          <TokenApiModeSetting
-            value={settings?.['token.api_mode']}
-            remoteUrl={settings?.['token.remote_url']}
-            remoteSecretKey={settings?.['token.remote_secret_key']}
-            onSaved={(mode, remoteUrl, remoteSecretKey) => setSettings((current) => current ? {
-              ...current,
-              'token.api_mode': mode,
-              'token.remote_url': remoteUrl ?? String(current['token.remote_url'] || ''),
-              'token.remote_secret_key': remoteSecretKey ?? String(current['token.remote_secret_key'] || ''),
-            } : current)}
           />
           <div className="flex justify-end border-t border-slate-100 pt-4 dark:border-slate-700">
             <button type="button" onClick={onBasicSave} disabled={basicSaving} className="btn-ios-primary">

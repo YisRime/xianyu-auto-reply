@@ -16,11 +16,6 @@ from app.services.system_setting_service import SENSITIVE_KEYS, SystemSettingSer
 from common.services.remote_password_login_api import (
     validate_remote_password_login_settings,
 )
-from common.services.remote_token_api import (
-    TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
-    TOKEN_REMOTE_URL_SETTING_KEY,
-    validate_remote_token_settings,
-)
 from common.services.system_setting_validation import (
     parse_boolean_setting,
     parse_log_retention_days,
@@ -28,11 +23,6 @@ from common.services.system_setting_validation import (
 )
 from common.services.registration_policy import REGISTRATION_ENABLED_KEY
 from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS, normalize_policy_setting
-from common.services.token_api_mode import (
-    TOKEN_API_MODE_REMOTE,
-    TOKEN_API_MODE_SETTING_KEY,
-    TOKEN_API_MODES,
-)
 from common.utils.email_utils import normalize_email_address
 
 LOG_RETENTION_KEY = "log.retention_days"
@@ -52,8 +42,6 @@ _TRIMMED_SETTING_KEYS = {
     LOG_RETENTION_KEY,
     PASSWORD_LOGIN_REMOTE_URL_KEY,
     PASSWORD_LOGIN_REMOTE_SECRET_KEY_KEY,
-    TOKEN_REMOTE_URL_SETTING_KEY,
-    TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
     PROXY_URL_KEY,
 }
 
@@ -102,11 +90,6 @@ def _normalize_setting_value(key: str, raw_value: str) -> tuple[str, str | None]
         if value not in CAPTCHA_SLIDER_MODES:
             return value, "滑块滑动方式无效，请选择浏览器自动滑动或真实鼠标滑动"
 
-    if key == TOKEN_API_MODE_SETTING_KEY:
-        value = value.strip().lower()
-        if value not in TOKEN_API_MODES:
-            return value, "Token获取方式无效，请选择网页接口或远程接口"
-
     if key == LOG_RETENTION_KEY:
         _, error_message = parse_log_retention_days(value)
         if error_message:
@@ -126,21 +109,6 @@ def _validate_target_state(target: Mapping[str, str], changed_keys: set[str]) ->
         proxy_url = str(target.get(PROXY_URL_KEY) or "").strip()
         if parse_boolean_setting(target.get(PROXY_ENABLED_KEY)) and not proxy_url:
             return "开启代理前请先填写代理 API 的 URL"
-
-    token_keys = {
-        TOKEN_API_MODE_SETTING_KEY,
-        TOKEN_REMOTE_URL_SETTING_KEY,
-        TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
-    }
-    if changed_keys.intersection(token_keys):
-        token_mode = str(target.get(TOKEN_API_MODE_SETTING_KEY) or "").strip().lower()
-        if token_mode == TOKEN_API_MODE_REMOTE:
-            error_message = validate_remote_token_settings(
-                str(target.get(TOKEN_REMOTE_URL_SETTING_KEY) or ""),
-                str(target.get(TOKEN_REMOTE_SECRET_KEY_SETTING_KEY) or ""),
-            )
-            if error_message:
-                return error_message
 
     password_login_keys = {
         PASSWORD_LOGIN_MODE_KEY,

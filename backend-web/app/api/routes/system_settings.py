@@ -19,12 +19,10 @@ from app.services.log_retention_service import refresh_log_retention_runtime
 from app.services.system_setting_service import SENSITIVE_KEYS, SystemSettingService
 from app.services.system_settings_email_service import validate_test_email_recipient
 from app.services.system_settings_update_service import validate_system_settings_update
-from app.services.token_remote_test_service import test_token_remote_settings
 from common.models.user import User, UserRole
 from common.schemas.common import ApiResponse
 from common.schemas.system_setting import (
     RemotePasswordLoginTestRequest,
-    RemoteTokenTestRequest,
     SystemSettingsBatchUpdate,
     SystemSettingUpdate,
 )
@@ -204,15 +202,6 @@ async def test_email_send(
         client_ip=client_ip,
     )
     return ApiResponse(success=success, code=200 if success else 40001, message=message)
-
-
-@router.post("/test-token-remote", response_model=ApiResponse)
-async def test_token_remote_interface(
-    payload: RemoteTokenTestRequest,
-    current_user: User = Depends(deps.get_current_admin_user),  # noqa: B008
-) -> ApiResponse:
-    """测试远程 Token 接口连通性与返回格式。"""
-    return await test_token_remote_settings(payload, current_user, scene="系统设置")
 
 
 @router.post("/test-password-login-remote", response_model=ApiResponse)

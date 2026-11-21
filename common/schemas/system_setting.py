@@ -14,11 +14,6 @@ class SystemSettingsBatchUpdate(BaseModel):
     settings: dict[str, SystemSettingUpdate]
 
 
-class RemoteTokenTestRequest(BaseModel):
-    remote_url: str
-    remote_secret_key: str
-
-
 class RemotePasswordLoginTestRequest(BaseModel):
     remote_url: str
     remote_secret_key: str

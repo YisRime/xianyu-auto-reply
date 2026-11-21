@@ -15,14 +15,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
-from common.services.remote_token_api import (
-    TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
-    TOKEN_REMOTE_URL_SETTING_KEY,
-)
-from common.services.token_api_mode import (
-    TOKEN_API_MODE_SETTING_KEY,
-    normalize_token_api_mode,
-)
 from common.services.registration_policy import REGISTRATION_ENABLED_KEY
 from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS
 from common.services.system_setting_validation import parse_boolean_setting
@@ -76,8 +68,6 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     "password_login.mode": ("browser", "账号密码登录模式：protocol/browser"),
     "password_login.remote_url": ("", "协议登录远程接口URL"),
     "password_login.remote_secret_key": ("", "协议登录远程接口秘钥"),
-    # Token获取方式：web-网页接口 / remote-远程接口
-    "token.api_mode": ("web", "Token获取方式：web-网页接口/remote-远程接口"),
     "token.remote_url": ("", "Token远程接口URL"),
     "token.remote_secret_key": ("", "Token远程接口秘钥"),
 }
@@ -140,11 +130,6 @@ NO_ESCAPE_KEYS = {
     # 协议登录远程接口配置：URL 和秘钥不能被 XSS 转义
     "password_login.remote_url",
     "password_login.remote_secret_key",
-    # Token获取方式：枚举字符串，无需转义
-    "token.api_mode",
-    # Token远程接口配置：URL 和秘钥不能被 XSS 转义
-    TOKEN_REMOTE_URL_SETTING_KEY,
-    TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
     # 服务间令牌不会经由通用设置接口写入；加入免转义集合，防止内部维护时被破坏。
     "security.internal_api_token",
 }
@@ -243,10 +228,6 @@ class SystemSettingService:
         slider_mode = str(settings.get("captcha.slider_mode") or "").strip().lower()
         settings["captcha.slider_mode"] = (
             slider_mode if slider_mode in {"browser", "real_mouse"} else "browser"
-        )
-        # Token获取方式：非法值统一回落到默认的网页接口
-        settings[TOKEN_API_MODE_SETTING_KEY] = normalize_token_api_mode(
-            settings.get(TOKEN_API_MODE_SETTING_KEY)
         )
         return settings
 

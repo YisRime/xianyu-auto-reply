@@ -24,19 +24,7 @@ from common.services.captcha.token_response import (
     is_token_expired_response,
 )
 from common.services.im_token_api import extract_im_access_token
-from common.services.remote_token_api import (
-    load_remote_token_settings_sync,
-    request_remote_xianyu_token_from_settings_sync,
-    validate_remote_token_settings,
-)
-from common.services.remote_token_risk_log_service import (
-    REMOTE_OUTCOME_FAILED,
-    REMOTE_OUTCOME_SUCCESS,
-    build_remote_direct_event_description,
-    record_remote_token_risk_log_sync,
-)
 from common.services.token_api_mode import (
-    TOKEN_API_MODE_REMOTE,
     TOKEN_API_MODE_WEB,
     get_token_api_mode_label,
     get_token_api_name,
@@ -51,7 +39,6 @@ _APP_KEY = "34839810"
 _TOKEN_REFETCH_TOTAL_TIMEOUT_SECONDS = 10.0
 _TOKEN_API_CONNECT_TIMEOUT_SECONDS = 3.0
 # 重取滑块验证链接场景的风控日志事件描述前缀
-_REMOTE_TOKEN_EVENT_SCENE = "重取滑块验证链接时"
 
 
 def _post_token_api(
@@ -227,126 +214,6 @@ def _request_token_api_with_expiry_retry(
     )
 
 
-def _request_remote_token(
-    cookie_id: str,
-    result: dict[str, object],
-    *,
-    cookies_str: str,
-    timeout_seconds: float,
-) -> bool:
-    """调用远程 Token 接口并将结果写入重取结果。
-
-    Args:
-        cookie_id: 账号标识，用于读取所属用户配置、日志和风控记录。
-        result: 当前重取结果，远程成功时会写入 Token 与设备信息。
-        cookies_str: 当前账号完整 Cookie 字符串，传给远程接口 data.cookies。
-        timeout_seconds: 远程请求可用的剩余超时预算。
-    Returns:
-        远程接口是否成功返回有效 Token。
-    """
-    def _event_description(remote_outcome: str) -> str:
-        return build_remote_direct_event_description(
-            remote_outcome=remote_outcome,
-            scene=_REMOTE_TOKEN_EVENT_SCENE,
-            configuration_source=remote_settings.source,
-        )
-
-    request_context = "按账号所属用户优先选择远程配置"
-
-    try:
-        remote_settings = load_remote_token_settings_sync(cookie_id)
-    except Exception as exc:
-        logger.warning(
-            f"【{cookie_id}】{request_context}，"
-            f"读取远程接口配置失败，跳过远程请求: {type(exc).__name__}: {exc}"
-        )
-        result["error_message"] = f"远程Token配置读取失败：{type(exc).__name__}: {exc}"
-        record_remote_token_risk_log_sync(
-            account_identifier=cookie_id,
-            success=False,
-            message=str(result["error_message"]),
-            event_description="远程Token配置读取失败，已停止本次请求",
-        )
-        return False
-
-    request_context = f"按{remote_settings.source}直接调用远程接口"
-    config_error = validate_remote_token_settings(
-        remote_settings.url,
-        remote_settings.secret_key,
-    )
-    if config_error:
-        result["error_message"] = config_error
-        logger.info(
-            f"【{cookie_id}】{request_context}，"
-            f"远程接口未配置，跳过远程请求: {config_error}"
-        )
-        record_remote_token_risk_log_sync(
-            account_identifier=cookie_id,
-            success=False,
-            message=config_error,
-            event_description=_event_description(REMOTE_OUTCOME_FAILED),
-        )
-        return False
-
-    logger.warning(
-        f"【{cookie_id}】{request_context}，开始调用远程接口获取Token"
-    )
-    # 远程整体耗时自行计时：异常时拿不到 RemoteTokenResult.duration_seconds
-    remote_started_at = time.monotonic()
-    try:
-        remote_result = request_remote_xianyu_token_from_settings_sync(
-            cookies=cookies_str,
-            timeout_seconds=timeout_seconds,
-            account_id=cookie_id,
-            settings=remote_settings,
-        )
-    except Exception as exc:
-        error_message = f"{type(exc).__name__}: {exc}"
-        result["error_message"] = error_message
-        record_remote_token_risk_log_sync(
-            account_identifier=cookie_id,
-            success=False,
-            message=error_message,
-            duration_seconds=time.monotonic() - remote_started_at,
-            local_duration_seconds=0,
-            event_description=_event_description(REMOTE_OUTCOME_FAILED),
-        )
-        logger.warning(
-            f"【{cookie_id}】远程接口调用异常: {error_message}"
-        )
-        return False
-
-    record_remote_token_risk_log_sync(
-        account_identifier=cookie_id,
-        success=remote_result.success,
-        message=remote_result.message,
-        api_mode=remote_result.api_mode,
-        status_code=remote_result.status_code,
-        duration_seconds=remote_result.duration_seconds,
-        local_duration_seconds=0,
-        event_description=_event_description(
-            REMOTE_OUTCOME_SUCCESS if remote_result.success else REMOTE_OUTCOME_FAILED
-        ),
-    )
-    if not remote_result.success:
-        result["error_message"] = remote_result.message or "远程接口获取Token失败"
-        logger.warning(
-            f"【{cookie_id}】远程接口获取Token失败: "
-            f"{remote_result.message or '未返回错误说明'}"
-        )
-        return False
-
-    result["token_ok"] = True
-    result["new_token"] = remote_result.token
-    result["device_id"] = remote_result.device_id
-    result["api_mode"] = remote_result.api_mode
-    logger.info(
-        f"【{cookie_id}】远程接口获取Token成功，"
-        f"实际接口={remote_result.api_mode or '未返回'}"
-    )
-    return True
-
-
 def request_fresh_captcha_url(
     cookie_id: str,
     cookies: dict[str, str],
@@ -385,20 +252,6 @@ def request_fresh_captcha_url(
     }
     try:
         deadline = time.monotonic() + _TOKEN_REFETCH_TOTAL_TIMEOUT_SECONDS
-        # 网页模式只调用本地网页端接口；远程模式按配置直接调用远程接口。
-        configured_mode = load_token_api_mode_sync(cookie_id)
-        remote_mode = configured_mode == TOKEN_API_MODE_REMOTE
-
-        if remote_mode:
-            remaining_seconds = max(0.1, deadline - time.monotonic())
-            _request_remote_token(
-                cookie_id,
-                result,
-                cookies_str=cookies_str,
-                timeout_seconds=remaining_seconds,
-            )
-            return result
-
         current_cookies = dict(cookies)
         current_cookies_str = cookies_str
         try:

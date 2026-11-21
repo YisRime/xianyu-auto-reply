@@ -4,7 +4,6 @@ import { RefreshCw } from 'lucide-react'
 import { PageLoading } from '@/components/common/Loading'
 import { PersonalBasicSettings } from './PersonalBasicSettings'
 import { LocationRemoteSettingsCard } from './LocationRemoteSettingsCard'
-import { TokenRemoteSettingsCard } from './TokenRemoteSettingsCard'
 import { usePersonalSettingsData } from './usePersonalSettingsData'
 
 export function PersonalSettings() {
@@ -47,7 +46,6 @@ export function PersonalSettings() {
       {remoteOpened && (
         <div className={activeTab === 'remote' ? 'space-y-4' : 'hidden'}>
           <LocationRemoteSettingsCard />
-          <TokenRemoteSettingsCard />
         </div>
       )}
     </div>

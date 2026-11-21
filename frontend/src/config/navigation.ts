@@ -122,7 +122,6 @@ export const mainNavItems: NavEntry[] = [
 
 export const adminNavItems: NavEntry[] = [
   { key: 'settings', icon: Settings, label: '系统设置', path: '/settings', adminOnly: true },
-  { key: 'admin-users', icon: UserCog, label: '用户管理', path: '/admin/users', adminOnly: true },
   {
     key: 'admin-logs',
     icon: ScrollText,

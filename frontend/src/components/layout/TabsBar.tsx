@@ -47,7 +47,6 @@ const routeTitles: Record<string, string> = {
   '/feedback': '意见反馈',
   '/ad-apply': '广告申请',
   '/tutorial': '使用教程',
-  '/admin/users': '用户管理',
   '/admin/logs': '系统日志',
   '/admin/auto-reply-logs': '消息日志',
   '/admin/account-login-logs': '账号登录日志',

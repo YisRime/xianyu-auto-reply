@@ -56,7 +56,6 @@ const OrderFallbackAccount = React.lazy(() => import('@/pages/product-monitor/Or
 const CollectFallbackAccount = React.lazy(() => import('@/pages/product-monitor/CollectFallbackAccount').then(m => ({ default: m.CollectFallbackAccount })))
 
 // 管理员页面懒加载
-const Users = React.lazy(() => import('@/pages/admin/Users').then(m => ({ default: m.Users })))
 const Logs = React.lazy(() => import('@/pages/admin/Logs').then(m => ({ default: m.Logs })))
 const AutoReplyLogs = React.lazy(() => import('@/pages/autoReplyLogs/AutoReplyLogs').then(m => ({ default: m.AutoReplyLogs })))
 const RiskLogs = React.lazy(() => import('@/pages/admin/RiskLogs').then(m => ({ default: m.RiskLogs })))
@@ -294,7 +293,6 @@ function App() {
             <Route path="about" element={<About />} />
 
             {/* Admin routes */}
-            <Route path="admin/users" element={<Users />} />
             <Route path="admin/logs" element={<Logs />} />
             <Route path="admin/account-login-logs" element={<AccountLoginLogs />} />
             <Route path="admin/user-login-logs" element={<UserLoginLogs />} />

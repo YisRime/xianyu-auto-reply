@@ -7,7 +7,6 @@ import { useCallback, useState } from 'react'
 import {
   buildHiddenMenuSettingsPayload,
   getHiddenMenuKeysFromSettings,
-  updateAuthFooterAdSettings,
   updateDisclaimerSettings,
   updateDistributionSettings,
   updateLoginBrandingSettings,
@@ -21,7 +20,6 @@ import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { isValidEmail } from '@/utils/email'
 import type {
-  AuthFooterAdSettings,
   DisclaimerSettings,
   LoginBrandingSettings,
   PaymentChannel,
@@ -204,10 +202,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     })
   }, [getSettings, persist, run, savingKeys, setHiddenMenuKeys])
 
-  const saveAdPrices = useCallback(async (payload: Partial<SystemSettings>) => {
-    await run('adPrice', async () => { await persist(payload, '广告费用保存成功', '广告费用保存失败') })
-  }, [persist, run])
-
   const saveSpecial = useCallback(async (key: string, action: () => Promise<{ success: boolean; message?: string }>, successMessage: string, failureMessage: string) => {
     await run(key, async () => {
       try {
@@ -229,9 +223,7 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     saveUserExpiry,
     saveProxy,
     saveHiddenMenus,
-    saveAdPrices,
     saveLoginBranding: (settings: LoginBrandingSettings) => saveSpecial('branding', () => updateLoginBrandingSettings({ ...settings }), '登录品牌设置保存成功', '登录品牌设置保存失败'),
-    saveAuthFooterAd: (settings: AuthFooterAdSettings) => saveSpecial('footerAd', () => updateAuthFooterAdSettings({ ...settings }), '底部广告设置保存成功', '底部广告设置保存失败'),
     saveDisclaimer: (settings: DisclaimerSettings) => saveSpecial('disclaimer', () => updateDisclaimerSettings({ ...settings }), '免责声明保存成功', '免责声明保存失败'),
     saveThemeAppearance: (settings: ThemeAppearanceSettings) => saveSpecial('themeAppearance', () => updateThemeAppearanceSettings({ ...settings }), '主题外观保存成功', '主题外观保存失败'),
     saveThemeFont: (settings: ThemeFontSettings) => saveSpecial('themeFont', () => updateThemeFontSettings({ ...settings }), '主题字体保存成功', '主题字体保存失败'),

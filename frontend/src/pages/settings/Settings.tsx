@@ -10,7 +10,6 @@ import {
   buildHiddenMenuSettingsPayload,
   getHiddenMenuKeysFromSettings,
   getSystemSettings,
-  normalizeAuthFooterAdSettings,
   normalizeDisclaimerSettings,
   normalizeLoginBrandingSettings,
   testEmailSend,
@@ -26,7 +25,6 @@ import {
   normalizeThemeFontSettings,
 } from '@/utils/theme'
 import type {
-  AuthFooterAdSettings,
   DisclaimerSettings,
   LoginBrandingSettings,
   SystemSettings,
@@ -136,7 +134,6 @@ export function Settings() {
   const themeAppearance = normalizeThemeAppearanceSettings(settings)
   const themeFont = normalizeThemeFontSettings(settings)
   const loginBranding = normalizeLoginBrandingSettings(settings)
-  const authFooterAd = normalizeAuthFooterAdSettings(settings)
   const disclaimer = normalizeDisclaimerSettings(settings)
 
   return (
@@ -174,12 +171,10 @@ export function Settings() {
         themeAppearanceSettings={themeAppearance}
         themeFontSettings={themeFont}
         loginBrandingSettings={loginBranding}
-        authFooterAdSettings={authFooterAd}
         disclaimerSettings={disclaimer}
         themeAppearanceSaving={actions.saving('themeAppearance')}
         themeFontSaving={actions.saving('themeFont')}
         loginBrandingSaving={actions.saving('branding')}
-        authFooterAdSaving={actions.saving('footerAd')}
         disclaimerSaving={actions.saving('disclaimer')}
         onThemeAppearanceChange={handleThemeAppearanceChange}
         onThemeAppearanceSave={() => void actions.saveThemeAppearance(themeAppearance)}
@@ -187,8 +182,6 @@ export function Settings() {
         onThemeFontSave={() => void actions.saveThemeFont(themeFont)}
         onLoginBrandingChange={(key: keyof LoginBrandingSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
         onLoginBrandingSave={() => void actions.saveLoginBranding(loginBranding)}
-        onAuthFooterAdChange={(key: keyof AuthFooterAdSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
-        onAuthFooterAdSave={() => void actions.saveAuthFooterAd(authFooterAd)}
         onDisclaimerChange={(key: keyof DisclaimerSettings, value: string) => setSettings((current) => ({ ...(current ?? {}), [key]: value }))}
         onDisclaimerSave={() => void actions.saveDisclaimer(disclaimer)}
       />}
@@ -197,11 +190,9 @@ export function Settings() {
         settings={settings}
         setSettings={setSettings}
         paymentSaving={actions.saving('payment')}
-        adPriceSaving={actions.saving('adPrice')}
         withdrawSaving={actions.saving('withdraw')}
         distributionSaving={actions.saving('distribution')}
         onPaymentSave={() => void actions.savePayment()}
-        onAdPriceSave={(payload) => void actions.saveAdPrices(payload)}
         onWithdrawSave={() => void actions.saveWithdraw()}
         onDistributionSave={() => void actions.saveDistribution()}
       />}

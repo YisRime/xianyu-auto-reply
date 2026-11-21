@@ -13,7 +13,6 @@ from . import (
     activation,
     admin,
     admin_settlements,
-    advertisements,
     ai,
     ai_listing,
     announcements,
@@ -167,7 +166,6 @@ api_router.include_router(system_control.router, tags=["系统管理"])  # 已�
 api_router.include_router(announcements.router, prefix="/announcements", tags=["公告管理"])
 api_router.include_router(popup_announcements.router, prefix="/popup-announcements", tags=["弹窗公告"])
 api_router.include_router(feedback.router, prefix="/feedbacks", tags=["反馈管理"])
-api_router.include_router(advertisements.router, prefix="/advertisements", tags=["广告管理"])
 api_router.include_router(auto_reply_logs.router, tags=["消息日志"])
 api_router.include_router(account_login_logs.router, tags=["账号登录日志"])
 api_router.include_router(user_login_logs.router, tags=["用户登录日志"])

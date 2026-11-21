@@ -9,8 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.advertisement_orders import lock_order_advertisement
-from app.services.advertisement_payment_service import AdvertisementPaymentService
 from app.services.alipay_service import AlipayService
 from app.services.payment_config_service import (
     CHANNEL_ALIPAY,
@@ -210,7 +208,6 @@ class PaymentCheckoutService:
 
     async def _mark_payment_failed(self, order_no: str, channel: str, source: str, values: dict[str, Any]) -> bool:
         """将已验签的关闭通知落为失败状态，避免用户端永久轮询。"""
-        await lock_order_advertisement(self.session, order_no)
         order = await self._lock_order(order_no)
         if not order:
             logger.error("%s关闭通知对应订单不存在: order_no=%s values=%s", source, order_no, values)
@@ -228,7 +225,6 @@ class PaymentCheckoutService:
 
     async def _settle_notify(self, order_no: str, trade_no: str, paid_amount: str, channel: str, source: str, values: dict[str, Any]) -> bool:
         """锁定订单、核对渠道及金额，然后按余额充值或广告付款分流。"""
-        await lock_order_advertisement(self.session, order_no)
         order = await self._lock_order(order_no)
         if not order:
             logger.error("%s订单不存在: order_no=%s values=%s", source, order_no, values)
@@ -276,21 +272,6 @@ class PaymentCheckoutService:
                 "%s已验签，忽略通知金额并按订单金额结算: order_no=%s order_amount=%s notify_amount=%s",
                 source, order_no, order.amount, paid_amount,
             )
-        if order.order_type == "ad":
-            if order.status not in {"pending", "failed", "expired", "paid"}:
-                logger.error("%s广告订单状态无效: order_no=%s status=%s values=%s", source, order_no, order.status, values)
-                return False
-            try:
-                await AdvertisementPaymentService(self.session).notify(
-                    order, values, source=source,
-                    amount_key="money" if channel == CHANNEL_ZZCODE else "total_amount",
-                    verify_amount=channel == CHANNEL_ALIPAY,
-                )
-                return True
-            except Exception as exc:
-                await self.session.rollback()
-                logger.exception("%s广告付款结算失败: order_no=%s values=%s exception=%s", source, order_no, values, exc)
-                return False
         if order.order_type != "recharge":
             logger.error("%s订单类型无效: order_no=%s order_type=%s values=%s", source, order_no, order.order_type, values)
             return False

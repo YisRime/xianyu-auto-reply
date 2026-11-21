@@ -7,18 +7,15 @@ import { getPaymentConfigOptions, type PaymentOption } from '@/api/payment'
 import type { PaymentChannel, SystemSettings } from '@/types'
 import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { AdPriceSettingsCard } from './AdPriceSettingsCard'
 import type { SetSystemSettings } from './settingsTypes'
 
 interface PaymentSettingsTabProps {
   settings: SystemSettings | null
   setSettings: SetSystemSettings
   paymentSaving: boolean
-  adPriceSaving: boolean
   withdrawSaving: boolean
   distributionSaving: boolean
   onPaymentSave: () => void
-  onAdPriceSave: (payload: Partial<SystemSettings>) => void
   onWithdrawSave: () => void
   onDistributionSave: () => void
 }
@@ -93,8 +90,6 @@ export function PaymentSettingsTab(props: PaymentSettingsTabProps) {
           <SaveButton saving={props.paymentSaving} onClick={props.onPaymentSave} label="保存支付配置" />
         </div>
       </div>
-
-      <AdPriceSettingsCard settings={settings} saving={props.adPriceSaving} onChange={(key, value) => update(key, value)} onSave={props.onAdPriceSave} />
       <WithdrawCard settings={settings} update={update} saving={props.withdrawSaving} onSave={props.onWithdrawSave} />
       <DistributionCard settings={settings} update={update} saving={props.distributionSaving} onSave={props.onDistributionSave} />
     </div>

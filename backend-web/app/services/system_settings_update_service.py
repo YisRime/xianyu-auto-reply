@@ -18,7 +18,6 @@ from app.services.payment_config_service import (
     VALID_CHANNELS,
     normalize_pay_types,
 )
-from common.services.advertisement_types import AD_PRICE_DEFAULTS, parse_ad_price
 from common.services.remote_password_login_api import (
     validate_remote_password_login_settings,
 )
@@ -112,12 +111,6 @@ def _normalize_setting_value(key: str, raw_value: str) -> tuple[str, str | None]
         value = "true" if parse_boolean_setting(raw_value) else "false"
     if key in _TRIMMED_SETTING_KEYS:
         value = value.strip()
-
-    if key in AD_PRICE_DEFAULTS:
-        try:
-            parse_ad_price(value)
-        except ValueError as exc:
-            return value, str(exc)
 
     if key == PASSWORD_LOGIN_MODE_KEY:
         value = value.strip().lower()

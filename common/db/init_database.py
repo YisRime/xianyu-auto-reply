@@ -28,7 +28,6 @@ from common.db.default_publish_addresses import (
     build_default_publish_addresses,
 )
 from common.db.auto_relist_schema import ensure_auto_relist_schema
-from common.db.advertisement_schema import ensure_advertisement_schema
 from common.db.scheduled_publish_rule_schema import ensure_scheduled_publish_rule_schema
 from common.db.payment_schema import ensure_payment_schema
 from common.db.item_query_indexes import ensure_item_query_indexes
@@ -249,11 +248,6 @@ class DatabaseInitializer:
             "login.system_description",
             "自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题",
             "登录页系统描述",
-        ),
-        (
-            "auth.footer_ad_html",
-            "© 2026 划算云服务器 ·<a href=\"http://www.hsykj.com\" target=\"_BLANK\">www.hsykj.com</a>",
-            "登录页和注册页底部广告 HTML",
         ),
         (
             "theme.effect",
@@ -989,29 +983,6 @@ class DatabaseInitializer:
         """,
 
         # 18.2 广告表
-        "xy_advertisements": """
-            CREATE TABLE IF NOT EXISTS xy_advertisements (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '广告ID',
-                user_id BIGINT NOT NULL COMMENT '申请用户ID',
-                title VARCHAR(200) NOT NULL COMMENT '广告标题',
-                content TEXT COMMENT '广告正文',
-                link VARCHAR(500) COMMENT '广告链接',
-                expire_date DATE COMMENT '到期日期',
-                image_url VARCHAR(500) COMMENT '图片URL',
-                ad_type ENUM('carousel', 'text', 'home_carousel', 'home_text') DEFAULT 'text' COMMENT '广告类型：仪表盘轮播图、仪表盘文字广告、首页轮播图、首页文字广告',
-                months INT COMMENT '购买月数',
-                total_amount VARCHAR(32) COMMENT '广告总金额',
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除：0-正常，1-已删除',
-                status ENUM('unpaid', 'pending', 'approved') DEFAULT 'unpaid' COMMENT '审核状态',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                INDEX idx_user_id (user_id),
-                INDEX idx_status (status),
-                INDEX idx_ad_type (ad_type),
-                INDEX idx_expire_date (expire_date)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='广告表';
-        """,
-
         # 19. Goofish 定时抓取任务表
         "xy_goofish_crawl_jobs": """
             CREATE TABLE IF NOT EXISTS xy_goofish_crawl_jobs (
@@ -2295,10 +2266,6 @@ class DatabaseInitializer:
             ("fee_payer", "VARCHAR(32) DEFAULT NULL COMMENT '手续费承担方：dealer-分销商，distributor-货主'", "fee_amount"),
             ("owner_user_id", "BIGINT DEFAULT NULL COMMENT '货主用户ID'", "upstream_dock_record_id"),
         ],
-        "xy_advertisements": [
-            ("months", "INT COMMENT '购买月数'", "ad_type"),
-            ("total_amount", "VARCHAR(32) COMMENT '广告总金额'", "months"),
-        ],
         "xy_settlement_records": [
             ("payment_type", "VARCHAR(16) COMMENT '收款方式：alipay-支付宝，wechat-微信'", "alipay_id"),
             ("payment_qrcode", "VARCHAR(512) COMMENT '收款码图片路径'", "payment_type"),
@@ -2333,10 +2300,6 @@ class DatabaseInitializer:
 
                     # 1.1 初始化所有枚举数据字典
                     await self.init_data_dictionaries()
-
-                    # 首页广告类型与支付关联独立迁移，只追加字段及初始化项。
-                    async with ddl_connection() as conn:
-                        await ensure_advertisement_schema(conn)
 
                     # 支付表结构是回调入账和幂等处理的前置条件，缺失时禁止带病启动。
                     async with ddl_connection() as conn:
@@ -2599,24 +2562,6 @@ class DatabaseInitializer:
                     logger.info("✓ xy_users: account_limit 字段已调整为允许为空且默认值为空")
             except Exception as e:
                 logger.warning(f"✗ xy_users account_limit 字段迁移失败: {e}")
-
-            # xy_advertisements: 将 status 枚举扩展为包含 'unpaid'
-            try:
-                check_enum = text("""
-                    SELECT COLUMN_TYPE FROM information_schema.COLUMNS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                    AND TABLE_NAME = 'xy_advertisements'
-                    AND COLUMN_NAME = 'status'
-                """)
-                result = await conn.execute(check_enum)
-                col_type = result.scalar()
-                if col_type and 'unpaid' not in col_type:
-                    await conn.execute(text(
-                        "ALTER TABLE xy_advertisements MODIFY COLUMN status ENUM('unpaid','pending','approved') DEFAULT 'unpaid' COMMENT '审核状态'"
-                    ))
-                    logger.info("✓ xy_advertisements: status 枚举已扩展（新增 unpaid）")
-            except Exception as e:
-                logger.warning(f"✗ xy_advertisements status 枚举迁移失败: {e}")
 
             # xy_token_cache: 将 user_id 字段从 VARCHAR(64) 扩展到 VARCHAR(128)
             try:

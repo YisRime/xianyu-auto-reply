@@ -10,23 +10,14 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import {
-  ArrowUpCircle, BarChart3, Bell, Bot, Code, Github, Gift,
-  Globe, Loader2, MessageCircle, MessageSquare, RefreshCw, Truck, Cloud,
-  UserCheck, Users, X,
+  ArrowUpCircle, BarChart3, Bell, Bot, Code, Github,
+  Globe, Loader2, MessageSquare, RefreshCw, Truck, Cloud,
+  UserCheck, X,
 } from 'lucide-react'
-import { getQrcodeUrl } from '@/api/settings'
 import { checkUpdate, type VersionCheckResult } from '@/api/version'
 import { useUIStore } from '@/store/uiStore'
 import { useVersionStore } from '@/store/versionStore'
 import { UpdateModal } from './UpdateModal'
-
-const DEFAULT_QRCODE_URLS = {
-  wechat: 'https://xy.zhinianboke.com/static/qrcode/wechat-group.png',
-  qq: 'https://xy.zhinianboke.com/static/qrcode/qq-group.jpg',
-  wechat_official: 'https://xy.zhinianboke.com/static/qrcode/wechat-official-group.jpg',
-  telegram: 'https://xy.zhinianboke.com/static/qrcode/telegram-group.png',
-  reward: 'https://xy.zhinianboke.com/static/qrcode/reward-group.png',
-} as const
 
 export function About() {
   const { addToast } = useUIStore()
@@ -35,13 +26,6 @@ export function About() {
 
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [totalUsers, setTotalUsers] = useState(0)
-
-  // 群二维码
-  const [wechatQrcode, setWechatQrcode] = useState<string | null>(DEFAULT_QRCODE_URLS.wechat)
-  const [qqQrcode, setQqQrcode] = useState<string | null>(DEFAULT_QRCODE_URLS.qq)
-  const [wechatOfficialQrcode, setWechatOfficialQrcode] = useState<string | null>(DEFAULT_QRCODE_URLS.wechat_official)
-  const [telegramQrcode, setTelegramQrcode] = useState<string | null>(DEFAULT_QRCODE_URLS.telegram)
-  const [rewardQrcode, setRewardQrcode] = useState<string | null>(DEFAULT_QRCODE_URLS.reward)
 
   // 版本检测状态
   const [updateInfo, setUpdateInfo] = useState<VersionCheckResult | null>(null)
@@ -111,33 +95,6 @@ export function About() {
       })
       .catch(() => {})
 
-    // 加载群二维码
-    getQrcodeUrl('wechat').then(res => {
-      if (res.success && res.data?.image_url) {
-        setWechatQrcode(res.data.image_url)
-      }
-    }).catch(() => {})
-    getQrcodeUrl('qq').then(res => {
-      if (res.success && res.data?.image_url) {
-        setQqQrcode(res.data.image_url)
-      }
-    }).catch(() => {})
-    getQrcodeUrl('wechat_official').then(res => {
-      if (res.success && res.data?.image_url) {
-        setWechatOfficialQrcode(res.data.image_url)
-      }
-    }).catch(() => {})
-    getQrcodeUrl('telegram').then(res => {
-      if (res.success && res.data?.image_url) {
-        setTelegramQrcode(res.data.image_url)
-      }
-    }).catch(() => {})
-    getQrcodeUrl('reward').then(res => {
-      if (res.success && res.data?.image_url) {
-        setRewardQrcode(res.data.image_url)
-      }
-    }).catch(() => {})
-
     // 先取本地版本号兜底（store 有缓存时不重复请求），保证远程检查更新失败时也能显示当前版本
     fetchCurrentVersion()
 
@@ -198,170 +155,6 @@ export function About() {
             )}
             <span>{checkingUpdate ? '检查中...' : '检查更新'}</span>
           </button>
-        </div>
-      </div>
-
-      {/* Contact Groups */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="vben-card">
-          <div className="vben-card-header">
-            <h2 className="vben-card-title">
-              <MessageCircle className="w-4 h-4 text-green-500" />
-              微信群
-            </h2>
-          </div>
-          <div className="vben-card-body text-center">
-            <div
-              className="w-[140px] h-[140px] mx-auto overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-green-400"
-              onClick={() => wechatQrcode && setPreviewImage(wechatQrcode)}
-            >
-              {wechatQrcode ? (
-                <img
-                  src={wechatQrcode}
-                  alt="微信群二维码"
-                  className="w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                    const parent = (e.target as HTMLImageElement).parentElement
-                    if (parent) {
-                      parent.innerHTML = '<p class="text-slate-400 dark:text-slate-500 py-12 text-sm">二维码未配置</p>'
-                    }
-                  }}
-                />
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 py-14 text-sm">二维码未配置</p>
-              )}
-            </div>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">扫码加入微信交流群</p>
-          </div>
-        </div>
-        <div className="vben-card">
-          <div className="vben-card-header">
-            <h2 className="vben-card-title">
-              <Users className="w-4 h-4 text-blue-500" />
-              QQ群
-            </h2>
-          </div>
-          <div className="vben-card-body text-center">
-            <div
-              className="w-[140px] h-[140px] mx-auto overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-blue-400"
-              onClick={() => qqQrcode && setPreviewImage(qqQrcode)}
-            >
-              {qqQrcode ? (
-                <img
-                  src={qqQrcode}
-                  alt="QQ群二维码"
-                  className="w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                    const parent = (e.target as HTMLImageElement).parentElement
-                    if (parent) {
-                      parent.innerHTML = '<p class="text-slate-400 dark:text-slate-500 py-12 text-sm">二维码未配置</p>'
-                    }
-                  }}
-                />
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 py-14 text-sm">二维码未配置</p>
-              )}
-            </div>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">扫码加入QQ交流群</p>
-          </div>
-        </div>
-        <div className="vben-card">
-          <div className="vben-card-header">
-            <h2 className="vben-card-title">
-              <MessageCircle className="w-4 h-4 text-green-600" />
-              微信公众号
-            </h2>
-          </div>
-          <div className="vben-card-body text-center">
-            <div
-              className="w-[140px] h-[140px] mx-auto overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-green-500"
-              onClick={() => wechatOfficialQrcode && setPreviewImage(wechatOfficialQrcode)}
-            >
-              {wechatOfficialQrcode ? (
-                <img
-                  src={wechatOfficialQrcode}
-                  alt="微信公众号二维码"
-                  className="w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                    const parent = (e.target as HTMLImageElement).parentElement
-                    if (parent) {
-                      parent.innerHTML = '<p class="text-slate-400 dark:text-slate-500 py-12 text-sm">二维码未配置</p>'
-                    }
-                  }}
-                />
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 py-14 text-sm">二维码未配置</p>
-              )}
-            </div>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">关注公众号发送 最新源码 获取最新代码</p>
-          </div>
-        </div>
-        <div className="vben-card">
-          <div className="vben-card-header">
-            <h2 className="vben-card-title">
-              <MessageCircle className="w-4 h-4 text-blue-400" />
-              Telegram
-            </h2>
-          </div>
-          <div className="vben-card-body text-center">
-            <div
-              className="w-[140px] h-[140px] mx-auto overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-blue-400"
-              onClick={() => telegramQrcode && setPreviewImage(telegramQrcode)}
-            >
-              {telegramQrcode ? (
-                <img
-                  src={telegramQrcode}
-                  alt="Telegram二维码"
-                  className="w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                    const parent = (e.target as HTMLImageElement).parentElement
-                    if (parent) {
-                      parent.innerHTML = '<p class="text-slate-400 dark:text-slate-500 py-12 text-sm">二维码未配置</p>'
-                    }
-                  }}
-                />
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 py-14 text-sm">二维码未配置</p>
-              )}
-            </div>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">扫码加入Telegram群</p>
-          </div>
-        </div>
-        <div className="vben-card">
-          <div className="vben-card-header">
-            <h2 className="vben-card-title">
-              <Gift className="w-4 h-4 text-red-500" />
-              赞赏支持
-            </h2>
-          </div>
-          <div className="vben-card-body text-center">
-            <div
-              className="w-[140px] h-[140px] mx-auto overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:border-red-400"
-              onClick={() => rewardQrcode && setPreviewImage(rewardQrcode)}
-            >
-              {rewardQrcode ? (
-                <img
-                  src={rewardQrcode}
-                  alt="赞赏码"
-                  className="w-full h-full object-cover object-center"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                    const parent = (e.target as HTMLImageElement).parentElement
-                    if (parent) {
-                      parent.innerHTML = '<p class="text-slate-400 dark:text-slate-500 py-12 text-sm">赞赏码未配置</p>'
-                    }
-                  }}
-                />
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 py-14 text-sm">赞赏码未配置</p>
-              )}
-            </div>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">如果觉得好用，请作者喝杯咖啡</p>
-          </div>
         </div>
       </div>
 

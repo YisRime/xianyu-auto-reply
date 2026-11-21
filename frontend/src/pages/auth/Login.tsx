@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Lock, Mail, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { AuthNavbar } from '@/components/common/AuthNavbar'
-import { SafeHtml } from '@/components/common/SafeHtml'
 import { login, generateCaptcha, verifyCaptcha, sendVerificationCode } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -26,7 +25,7 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { enabled: registrationEnabled } = useRegistrationStatus()
-  const { showDefaultLogin, loginCaptchaEnabled, loginBranding, authFooterAd } = useLoginPageSettings(isAuthenticated)
+  const { showDefaultLogin, loginCaptchaEnabled, loginBranding } = useLoginPageSettings(isAuthenticated)
 
   // Form states
   const [username, setUsername] = useState('')
@@ -486,12 +485,6 @@ export function Login() {
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <SafeHtml
-            html={authFooterAd['auth.footer_ad_html']}
-            className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500"
-          />
         </motion.div>
       </div>
       </div>

@@ -1,4 +1,4 @@
-﻿"""
+"""
 系统设置服务
 
 功能：
@@ -15,7 +15,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
-from common.services.advertisement_types import AD_PRICE_DEFAULTS, parse_ad_price
 from app.services.payment_config_service import PAYMENT_SETTING_DEFAULTS
 from common.services.remote_token_api import (
     TOKEN_REMOTE_SECRET_KEY_SETTING_KEY,
@@ -55,11 +54,10 @@ DEFAULT_DISCLAIMER_CONTENT = (
 
 DEFAULT_LOGIN_SYSTEM_TITLE = "高效专业的\n闲鱼自动化管理平台"
 DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题"
-DEFAULT_AUTH_FOOTER_AD_HTML = "© 2026 划算云服务器 ·<a href=\"http://www.hsykj.com\" target=\"_BLANK\">www.hsykj.com</a>"
+
 
 DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     **EMAIL_DOMAIN_DEFAULTS,
-    **AD_PRICE_DEFAULTS,
     **PAYMENT_SETTING_DEFAULTS,
     "disclaimer.title": ("免责声明", "系统免责声明标题"),
     "disclaimer.content": (DEFAULT_DISCLAIMER_CONTENT, "系统免责声明正文"),
@@ -70,7 +68,6 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     "login.system_name": ("闲鱼管理系统", "登录页系统名称"),
     "login.system_title": (DEFAULT_LOGIN_SYSTEM_TITLE, "登录页系统标题"),
     "login.system_description": (DEFAULT_LOGIN_SYSTEM_DESCRIPTION, "登录页系统描述"),
-    "auth.footer_ad_html": (DEFAULT_AUTH_FOOTER_AD_HTML, "登录页和注册页底部广告 HTML"),
     "theme.effect": ("solid", "系统主题效果（solid-纯色，gradient-炫彩）"),
     "theme.color_preset": ("ocean", "系统主题颜色预设"),
     "theme.font_family": ("system", "系统主题字体预设"),
@@ -121,7 +118,6 @@ NO_ESCAPE_KEYS = {
     "login.system_name",
     "login.system_title",
     "login.system_description",
-    "auth.footer_ad_html",
     "theme.effect",
     "theme.color_preset",
     "theme.font_family",
@@ -143,10 +139,6 @@ NO_ESCAPE_KEYS = {
     "zzcode.notify_url",
     "zzcode.return_url",
     "zzcode.pay_types",
-    "ad_price.carousel",
-    "ad_price.text",
-    "ad_price.home_carousel",
-    "ad_price.home_text",
     "withdraw.notify_email",
     "withdraw.min_amount",
     "log.retention_days",
@@ -289,8 +281,6 @@ class SystemSettingService:
     async def set_setting(self, key: str, value: str, description: str | None = None) -> None:
         if key in SENSITIVE_KEYS:
             raise ValueError("敏感设置不能通过通用接口修改")
-        if key in AD_PRICE_DEFAULTS:
-            parse_ad_price(value)
         try:
             stmt = select(SystemSetting).where(SystemSetting.key == key)
             result = await self.session.execute(stmt)
@@ -334,10 +324,6 @@ class SystemSettingService:
         sensitive_keys = set(settings).intersection(SENSITIVE_KEYS)
         if sensitive_keys:
             raise ValueError("敏感设置不能通过通用接口修改")
-        for key, (value, _) in settings.items():
-            if key in AD_PRICE_DEFAULTS:
-                parse_ad_price(value)
-
         try:
             stmt = select(SystemSetting).where(SystemSetting.key.in_(tuple(settings.keys())))
             result = await self.session.execute(stmt)

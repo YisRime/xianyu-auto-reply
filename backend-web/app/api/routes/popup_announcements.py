@@ -23,10 +23,6 @@ from common.schemas.common import ApiResponse
 from common.utils.text_utils import escape_xss
 from common.utils.time_utils import safe_isoformat
 from common.utils.pagination import execute_paginated_with_filters
-from app.services.remote_content_service import (
-    fetch_remote_public_popup_announcements,
-    is_remote_fetch_request,
-)
 
 router = APIRouter(tags=["popup_announcements"])
 
@@ -94,12 +90,6 @@ async def get_public_popup_announcements(
     for item in announcements:
         items.append(_serialize(item))
         dedup_keys.add((item.title, item.content))
-
-    # 合并远程官方弹窗公告（失败时返回空，不影响本地展示）；
-    # 若请求本身来自服务器间远程拉取，则不再二次拉取，避免递归自调用
-    if not is_remote_fetch_request(user_agent):
-        remote_items = await fetch_remote_public_popup_announcements(local_dedup_keys=dedup_keys)
-        items.extend(remote_items)
 
     return ApiResponse(success=True, data={"items": items})
 

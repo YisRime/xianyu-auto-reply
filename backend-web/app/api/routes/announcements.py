@@ -19,10 +19,6 @@ from common.models.user import User
 from common.models.announcement import Announcement
 from common.schemas.common import ApiResponse
 from common.utils.text_utils import escape_xss
-from app.services.remote_content_service import (
-    fetch_remote_public_announcements,
-    is_remote_fetch_request,
-)
 
 from common.utils.time_utils import safe_isoformat
 from common.utils.pagination import execute_paginated_with_filters
@@ -83,12 +79,6 @@ async def get_public_announcements(
     for ann in announcements:
         items.append(_serialize_announcement(ann))
         dedup_keys.add((ann.title, ann.content))
-
-    # 合并远程官方公告（失败时返回空，不影响本地展示）；
-    # 若请求本身来自服务器间远程拉取，则不再二次拉取，避免递归自调用
-    if not is_remote_fetch_request(user_agent):
-        remote_items = await fetch_remote_public_announcements(local_dedup_keys=dedup_keys)
-        items.extend(remote_items)
 
     return ApiResponse(success=True, data={"items": items})
 

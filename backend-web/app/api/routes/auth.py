@@ -8,6 +8,7 @@
 4. 用户登出
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,6 +50,46 @@ async def login_user(
 ) -> LoginResponse:
     """调用统一登录流程，先校验后缀与限流，再认证并提交审计日志。"""
     return await perform_login(payload, get_client_ip(request), auth_service, session, login_log_service)
+
+
+@router.post("/local-auto-login", response_model=LoginResponse)
+async def local_auto_login(
+    request: Request,
+    auth_service: AuthService = Depends(deps.get_auth_service),
+    session: AsyncSession = Depends(deps.get_db_session),
+) -> LoginResponse:
+    """本机免密登录：仅允许来自本机的请求，直接返回管理员账号令牌。
+
+    用于本机单人部署时跳过登录页；非本机来源一律拒绝。
+    """
+    client_ip = get_client_ip(request)
+    if client_ip not in {"127.0.0.1", "::1", "localhost"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="仅允许本机免密登录",
+        )
+
+    result = await session.execute(
+        select(User)
+        .where(User.role == UserRole.ADMIN, User.status == UserStatus.ACTIVE)
+        .order_by(User.id)
+        .limit(1)
+    )
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="未找到可用的管理员账号")
+
+    await auth_service.mark_login(user)
+    return LoginResponse(
+        success=True,
+        message="登录成功",
+        token=auth_service.create_access_token(user),
+        refresh_token=auth_service.create_refresh_token(user),
+        user_id=user.id,
+        username=user.username,
+        is_admin=user.role == UserRole.ADMIN,
+        account_limit=user.account_limit,
+    )
 
 
 @router.get("/verify", response_model=VerifyResponse)

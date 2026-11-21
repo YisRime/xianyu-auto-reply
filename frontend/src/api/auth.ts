@@ -42,6 +42,11 @@ export const login = (data: LoginRequest): Promise<LoginResponse> => {
   return post(`${AUTH_PREFIX}/login`, data)
 }
 
+// 本机免密登录（仅限本机访问，用于跳过登录页）
+export const localAutoLogin = (): Promise<LoginResponse> => {
+  return post(`${AUTH_PREFIX}/local-auto-login`, {})
+}
+
 // 验证 Token
 export const verifyToken = (): Promise<{ authenticated: boolean; user_id?: number; username?: string; is_admin?: boolean; account_limit?: number | null }> => {
   return get(`${AUTH_PREFIX}/verify`)

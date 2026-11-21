@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore } from '@/store/authStore'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Toast } from '@/components/common/Toast'
-import { verifyToken } from '@/api/auth'
+import { localAutoLogin, verifyToken } from '@/api/auth'
 import { getHiddenMenuKeysFromSettings, getPublicSystemSettings, getSystemSettings } from '@/api/settings'
 import { getMenuAccessFallbackPath, isPathBlockedForUser } from '@/config/navigation'
 import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
@@ -14,7 +14,6 @@ import { Login } from '@/pages/auth/Login'
 
 // 页面组件懒加载，按需加载提升首屏速度
 const Dashboard = React.lazy(() => import('@/pages/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
-const Home = React.lazy(() => import('@/pages/home/Home').then(m => ({ default: m.Home })))
 const DataOverview = React.lazy(() => import('@/pages/data_analysis/DataOverview').then(m => ({ default: m.DataOverview })))
 const Accounts = React.lazy(() => import('@/pages/accounts/Accounts').then(m => ({ default: m.Accounts })))
 const Items = React.lazy(() => import('@/pages/items/Items').then(m => ({ default: m.Items })))
@@ -122,6 +121,39 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       const token = storeToken || localStorage.getItem('auth_token')
       
       if (!token) {
+        // 本机部署免密登录：无需登录页，直接签发管理员令牌
+        try {
+          const auto = await localAutoLogin()
+          if (auto?.success && auto.token) {
+            setAuth(auto.token, auto.refresh_token ?? '', {
+              user_id: auto.user_id!,
+              username: auto.username!,
+              is_admin: auto.is_admin!,
+              account_limit: auto.account_limit,
+            })
+            setAuthState('authenticated')
+            try {
+              const settingsResult = await getSystemSettings()
+              if (settingsResult.success && settingsResult.data) {
+                applyThemeSettings(settingsResult.data)
+                setIsExeMode(Boolean(settingsResult.data['runtime.is_exe_mode']))
+                setHiddenMenuKeys(getHiddenMenuKeysFromSettings(settingsResult.data))
+              } else {
+                setIsExeMode(false)
+                setHiddenMenuKeys([])
+              }
+            } catch {
+              setIsExeMode(false)
+              setHiddenMenuKeys([])
+            } finally {
+              setMenuState('ready')
+            }
+            checkingRef.current = false
+            return
+          }
+        } catch {
+          // 免密登录不可用（如非本机来源），回落到登录页
+        }
         setAuthState('unauthenticated')
         setMenuState('ready')
         checkingRef.current = false
@@ -235,7 +267,7 @@ function App() {
       <Suspense fallback={<PageLoading />}>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/about-public" element={<PublicAbout />} />
           {/* 兼职端扫码页面：无需登录，公开访问 */}

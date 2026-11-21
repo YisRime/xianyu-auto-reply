@@ -19,7 +19,6 @@ import {
   LogIn,
   Mail,
   MapPin,
-  Megaphone,
   MessageCircle,
   MessageSquare,
   MessageSquarePlus,
@@ -150,8 +149,6 @@ export const adminNavItems: NavEntry[] = [
     ],
   },
   { key: 'admin-scheduled-tasks', icon: Timer, label: '定时任务', path: '/admin/scheduled-tasks', adminOnly: true },
-  { key: 'admin-announcements', icon: Megaphone, label: '公告管理', path: '/admin/announcements', adminOnly: true },
-  { key: 'admin-popup-announcements', icon: Megaphone, label: '弹窗公告', path: '/admin/popup-announcements', adminOnly: true },
 ]
 
 export const bottomNavItems: NavItem[] = [

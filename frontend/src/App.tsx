@@ -36,8 +36,6 @@ const MessageNotifications = React.lazy(() => import('@/pages/notifications/Mess
 const Settings = React.lazy(() => import('@/pages/settings/Settings').then(m => ({ default: m.Settings })))
 const MessageFilters = React.lazy(() => import('@/pages/messageFilters/MessageFilters').then(m => ({ default: m.MessageFilters })))
 const Feedback = React.lazy(() => import('@/pages/feedback/Feedback'))
-const Announcements = React.lazy(() => import('@/pages/announcements/Announcements').then(m => ({ default: m.Announcements })))
-const PopupAnnouncements = React.lazy(() => import('@/pages/announcements/PopupAnnouncements').then(m => ({ default: m.PopupAnnouncements })))
 const Tutorial = React.lazy(() => import('@/pages/tutorial/Tutorial').then(m => ({ default: m.Tutorial })))
 const ItemSearch = React.lazy(() => import('@/pages/search/ItemSearch').then(m => ({ default: m.ItemSearch })))
 const GoofishCompass = React.lazy(() => import('@/pages/compass/GoofishCompass').then(m => ({ default: m.GoofishCompass })))
@@ -406,8 +404,6 @@ function App() {
             <Route path="admin/red-flower-batches" element={<RedFlowerBatches />} />
             <Route path="admin/red-flower-batches/:batchId" element={<RedFlowerBatchDetailPage />} />
             <Route path="admin/scheduled-tasks" element={<ScheduledTasks />} />
-            <Route path="admin/announcements" element={<Announcements />} />
-            <Route path="admin/popup-announcements" element={<PopupAnnouncements />} />
           </Route>
 
           {/* Catch all */}

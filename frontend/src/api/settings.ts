@@ -339,50 +339,6 @@ export const testLocationChatRemoteApi = async (
   })
 }
 
-// 一键创建对接卡密秘钥（后端调用外部密钥服务创建并自动保存到当前用户）
-export const createCardSecretKey = async (): Promise<ApiResponse<{ key_value: string }>> => {
-  return post('/api/v1/user-settings/card-secret-key/create')
-}
-
-// 上传收款码
-export const uploadPaymentQrcode = async (file: File, paymentType: 'alipay' | 'wechat'): Promise<{
-  success: boolean
-  message?: string
-  data?: { image_url: string; payment_type: string }
-}> => {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('payment_type', paymentType)
-  return post('/api/v1/user-settings/payment-qrcode/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-}
-
-
-// ========== 对接码管理 ==========
-
-// 获取对接码
-export const getDockCode = async (): Promise<{ success: boolean; dock_code?: string }> => {
-  return get(`${USERS_PREFIX}/dock-code`)
-}
-
-// 重置对接码
-export const resetDockCode = async (): Promise<ApiResponse> => {
-  return post(`${USERS_PREFIX}/dock-code/reset`)
-}
-
-
-// ========== 分销秘钥管理 ==========
-
-// 获取分销秘钥（无则自动生成）
-export const getSecretKey = async (): Promise<{ success: boolean; secret_key?: string }> => {
-  return get(`${USERS_PREFIX}/secret-key`)
-}
-
-// 更换分销秘钥
-export const resetSecretKey = async (): Promise<ApiResponse<{ secret_key: string }>> => {
-  return post(`${USERS_PREFIX}/secret-key/reset`)
-}
 
 
 // ========== 群二维码管理 ==========

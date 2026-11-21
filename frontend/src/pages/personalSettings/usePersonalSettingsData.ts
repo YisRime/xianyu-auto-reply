@@ -1,6 +1,6 @@
 /** 个人设置原有账户、分销及偏好数据，保持既有读取和保存流程。 */
 import { useState, useEffect } from 'react'
-import { getUserSetting, updateUserSetting, createCardSecretKey, changePassword, getDockCode, resetDockCode, getSecretKey, resetSecretKey, getSystemSettings, getCurrentUserProfile } from '@/api/settings'
+import { getUserSetting, updateUserSetting, changePassword, getSystemSettings, getCurrentUserProfile } from '@/api/settings'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 
@@ -15,7 +15,6 @@ const REDELIVERY_TRIGGER_KEYWORD_KEY = 'redelivery_trigger_keyword'
 const PAYMENT_QRCODE_KEY = 'payment_qrcode'
 const PAYMENT_TYPE_KEY = 'payment_type'
 // 对接卡密秘钥的 key（按用户存储，用于「分销卡券」页面对接上游卡券系统）
-const CARD_SECRET_KEY = 'distribution.card_secret_key'
 
 export function usePersonalSettingsData() {
   const { addToast } = useUIStore()
@@ -29,22 +28,6 @@ export function usePersonalSettingsData() {
   const [paymentQrcode, setPaymentQrcode] = useState('')
   const [paymentType, setPaymentType] = useState<'alipay' | 'wechat'>('alipay')
 
-  // 对接码状态
-  const [dockCode, setDockCode] = useState('')
-  const [dockCodeLoading, setDockCodeLoading] = useState(false)
-  const [resettingDockCode, setResettingDockCode] = useState(false)
-  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
-
-  // 分销秘钥状态
-  const [secretKey, setSecretKey] = useState('')
-  const [secretKeyLoading, setSecretKeyLoading] = useState(false)
-  const [resettingSecretKey, setResettingSecretKey] = useState(false)
-  const [secretKeyResetConfirmOpen, setSecretKeyResetConfirmOpen] = useState(false)
-
-  // 对接卡密秘钥状态（用于分销卡券对接上游系统）
-  const [cardSecretKey, setCardSecretKey] = useState('')
-  const [savingCardSecretKey, setSavingCardSecretKey] = useState(false)
-  const [creatingCardSecretKey, setCreatingCardSecretKey] = useState(false)
 
   // 联系方式状态
   const [contactWechat, setContactWechat] = useState('')
@@ -93,11 +76,6 @@ export function usePersonalSettingsData() {
       if (qqResult.success && qqResult.value !== undefined) {
         setContactQQ(qqResult.value)
       }
-      // 加载对接卡密秘钥
-      const cardKeyResult = await getUserSetting(CARD_SECRET_KEY)
-      if (cardKeyResult.success && cardKeyResult.value !== undefined) {
-        setCardSecretKey(cardKeyResult.value)
-      }
       // 加载当前用户到期日
       try {
         const profile = await getCurrentUserProfile()
@@ -121,140 +99,8 @@ export function usePersonalSettingsData() {
     }
   }
 
-  // 加载对接码
-  const loadDockCode = async () => {
-    try {
-      setDockCodeLoading(true)
-      const result = await getDockCode()
-      if (result.success && result.dock_code) {
-        setDockCode(result.dock_code)
-      }
-    } catch {
-      // 静默失败
-    } finally {
-      setDockCodeLoading(false)
-    }
-  }
-
-  // 重置对接码
-  const handleResetDockCode = async () => {
-    try {
-      setResettingDockCode(true)
-      const result = await resetDockCode()
-      if (result.success) {
-        addToast({ type: 'success', message: '对接码已重置' })
-        await loadDockCode()
-      } else {
-        addToast({ type: 'error', message: result.message || '重置失败' })
-      }
-    } catch {
-      addToast({ type: 'error', message: '重置对接码失败' })
-    } finally {
-      setResettingDockCode(false)
-      setResetConfirmOpen(false)
-    }
-  }
-
-  // 复制对接码
-  const handleCopyDockCode = () => {
-    if (!dockCode) return
-    navigator.clipboard.writeText(dockCode).then(() => {
-      addToast({ type: 'success', message: '对接码已复制到剪贴板' })
-    }).catch(() => {
-      addToast({ type: 'error', message: '复制失败，请手动复制' })
-    })
-  }
-
-  // 加载分销秘钥
-  const loadSecretKey = async () => {
-    try {
-      setSecretKeyLoading(true)
-      const result = await getSecretKey()
-      if (result.success && result.secret_key) {
-        setSecretKey(result.secret_key)
-      }
-    } catch {
-      // 静默失败
-    } finally {
-      setSecretKeyLoading(false)
-    }
-  }
-
-  // 更换分销秘钥
-  const handleResetSecretKey = async () => {
-    try {
-      setResettingSecretKey(true)
-      const result = await resetSecretKey()
-      if (result.success) {
-        addToast({ type: 'success', message: '分销秘钥已更换' })
-        if (result.data?.secret_key) {
-          setSecretKey(result.data.secret_key)
-        } else {
-          await loadSecretKey()
-        }
-      } else {
-        addToast({ type: 'error', message: result.message || '更换失败' })
-      }
-    } catch {
-      addToast({ type: 'error', message: '更换分销秘钥失败' })
-    } finally {
-      setResettingSecretKey(false)
-      setSecretKeyResetConfirmOpen(false)
-    }
-  }
-
-  // 复制分销秘钥
-  const handleCopySecretKey = () => {
-    if (!secretKey) return
-    navigator.clipboard.writeText(secretKey).then(() => {
-      addToast({ type: 'success', message: '分销秘钥已复制到剪贴板' })
-    }).catch(() => {
-      addToast({ type: 'error', message: '复制失败，请手动复制' })
-    })
-  }
-
-  // 保存对接卡密秘钥
-  const handleSaveCardSecretKey = async () => {
-    try {
-      setSavingCardSecretKey(true)
-      const result = await updateUserSetting(CARD_SECRET_KEY, cardSecretKey.trim(), '对接卡密秘钥')
-      if (result.success) {
-        addToast({ type: 'success', message: '对接卡密秘钥已保存' })
-      } else {
-        addToast({ type: 'error', message: result.message || '保存失败' })
-      }
-    } catch {
-      addToast({ type: 'error', message: '保存对接卡密秘钥失败' })
-    } finally {
-      setSavingCardSecretKey(false)
-    }
-  }
-
-  // 一键创建对接卡密秘钥：调用外部密钥服务创建并自动保存到当前用户
-  const handleCreateCardSecretKey = async () => {
-    // 已存在则禁止创建，提示联系管理员重置
-    if (cardSecretKey.trim()) {
-      addToast({ type: 'warning', message: '对接卡密秘钥已存在，如需重新创建请联系管理员重置' })
-      return
-    }
-    try {
-      setCreatingCardSecretKey(true)
-      const result = await createCardSecretKey()
-      if (result.success && result.data?.key_value) {
-        setCardSecretKey(result.data.key_value)
-        addToast({ type: 'success', message: result.message || '对接卡密秘钥创建成功' })
-      } else {
-        addToast({ type: 'error', message: result.message || '创建失败' })
-      }
-    } finally {
-      setCreatingCardSecretKey(false)
-    }
-  }
-
   useEffect(() => {
     loadSettings()
-    loadDockCode()
-    loadSecretKey()
   }, [_hasHydrated, isAuthenticated, token])
 
   // 保存重发货触发关键字
@@ -347,20 +193,6 @@ export function usePersonalSettingsData() {
     setPaymentQrcode,
     paymentType,
     setPaymentType,
-    dockCode,
-    dockCodeLoading,
-    resettingDockCode,
-    resetConfirmOpen,
-    setResetConfirmOpen,
-    secretKey,
-    secretKeyLoading,
-    resettingSecretKey,
-    secretKeyResetConfirmOpen,
-    setSecretKeyResetConfirmOpen,
-    cardSecretKey,
-    setCardSecretKey,
-    savingCardSecretKey,
-    creatingCardSecretKey,
     contactWechat,
     setContactWechat,
     contactQQ,
@@ -376,12 +208,6 @@ export function usePersonalSettingsData() {
     confirmPassword,
     setConfirmPassword,
     changingPassword,
-    handleResetDockCode,
-    handleCopyDockCode,
-    handleResetSecretKey,
-    handleCopySecretKey,
-    handleSaveCardSecretKey,
-    handleCreateCardSecretKey,
     handleSaveRedeliveryKeyword,
     handleSaveContact,
     handleChangePassword

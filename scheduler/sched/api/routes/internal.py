@@ -13,11 +13,11 @@ from fastapi import APIRouter, Depends
 from loguru import logger
 from pydantic import BaseModel
 
-from app.services.scheduler.listing_monitor_task import listing_monitor_task_service
-from app.services.scheduler_service import get_scheduler_service
+from sched.services.scheduler.listing_monitor_task import listing_monitor_task_service
+from sched.services.scheduler_service import get_scheduler_service
 from common.services.account_cooldown import account_cooldown_manager
 from common.utils.time_utils import get_beijing_now_naive
-from app.api.deps import require_internal_auth
+from sched.api.deps import require_internal_auth
 
 router = APIRouter(
     prefix="/internal",

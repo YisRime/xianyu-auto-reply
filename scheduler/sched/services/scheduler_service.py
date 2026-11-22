@@ -15,34 +15,34 @@ from typing import Optional
 
 from loguru import logger
 
-from app.services.scheduler.redelivery_task import RedeliveryTask
-from app.services.scheduler.rate_task import RateTask
-from app.services.scheduler.polish_task import polish_task_service
-from app.services.scheduler.day_switch_task import day_switch_task_service
-from app.services.scheduler.cleanup_browser_data_task import cleanup_browser_data_task_service
-from app.services.scheduler.cleanup_unconfigured_browser_data_task import cleanup_unconfigured_browser_data_task_service
-from app.services.scheduler.fetch_orders_task import (
+from sched.services.scheduler.redelivery_task import RedeliveryTask
+from sched.services.scheduler.rate_task import RateTask
+from sched.services.scheduler.polish_task import polish_task_service
+from sched.services.scheduler.day_switch_task import day_switch_task_service
+from sched.services.scheduler.cleanup_browser_data_task import cleanup_browser_data_task_service
+from sched.services.scheduler.cleanup_unconfigured_browser_data_task import cleanup_unconfigured_browser_data_task_service
+from sched.services.scheduler.fetch_orders_task import (
     fetch_orders_task_service,
     fetch_pending_orders_task_service,
     fetch_refund_orders_task_service,
 )
-from app.services.scheduler.fetch_items_task import fetch_items_task_service
-from app.services.scheduler.login_renew_task import login_renew_task_service
-from app.services.scheduler.token_renewal_task import token_renewal_task_service
-from app.services.scheduler.cookies_refresh_task import cookies_refresh_task_service
-from app.services.scheduler.api_cookie_renew_task import api_cookie_renew_task_service
-from app.services.scheduler.close_notice_task import close_notice_task_service
-from app.services.scheduler.red_flower_task import RedFlowerTask
-from app.services.scheduler.db_backup_task import db_backup_task_service
-from app.services.scheduler.delivery_timeout_task import delivery_timeout_task_service
-from app.services.scheduler.listing_monitor_task import listing_monitor_task_service
-from app.services.scheduler.seller_fill_task import seller_fill_task_service
-from app.services.scheduler.dm_send_task import dm_send_task_service
-from app.services.scheduler.auto_order_task import auto_order_task_service
-from app.services.scheduler.image_cleanup_task import image_cleanup_task_service
-from app.services.scheduler.auto_relist_task import auto_relist_task_service
-from app.services.scheduler.scheduled_publish_task import scheduled_publish_task_service
-from app.services.scheduled_task_service import (
+from sched.services.scheduler.fetch_items_task import fetch_items_task_service
+from sched.services.scheduler.login_renew_task import login_renew_task_service
+from sched.services.scheduler.token_renewal_task import token_renewal_task_service
+from sched.services.scheduler.cookies_refresh_task import cookies_refresh_task_service
+from sched.services.scheduler.api_cookie_renew_task import api_cookie_renew_task_service
+from sched.services.scheduler.close_notice_task import close_notice_task_service
+from sched.services.scheduler.red_flower_task import RedFlowerTask
+from sched.services.scheduler.db_backup_task import db_backup_task_service
+from sched.services.scheduler.delivery_timeout_task import delivery_timeout_task_service
+from sched.services.scheduler.listing_monitor_task import listing_monitor_task_service
+from sched.services.scheduler.seller_fill_task import seller_fill_task_service
+from sched.services.scheduler.dm_send_task import dm_send_task_service
+from sched.services.scheduler.auto_order_task import auto_order_task_service
+from sched.services.scheduler.image_cleanup_task import image_cleanup_task_service
+from sched.services.scheduler.auto_relist_task import auto_relist_task_service
+from sched.services.scheduler.scheduled_publish_task import scheduled_publish_task_service
+from sched.services.scheduled_task_service import (
     ScheduledTaskService,
     TASK_CODE_REDELIVERY,
     TASK_CODE_RATE,

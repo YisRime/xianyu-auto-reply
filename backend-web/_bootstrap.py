@@ -164,7 +164,27 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("已禁用自动启动Goofish定时采集任务（AUTO_START_CRAWL_JOBS=false）")
     
+    # 启动合并进本进程的定时任务调度器
+    scheduler_service = None
+    try:
+        from sched.services.scheduler_service import get_scheduler_service
+
+        scheduler_service = get_scheduler_service()
+        await scheduler_service.reload_all_configs()
+        scheduler_service.start()
+        logger.info("定时任务调度器已启动（内嵌）")
+    except Exception:
+        scheduler_service = None
+        logger.exception("定时任务调度器启动失败，服务继续运行但定时任务不可用")
+
     yield
+
+    if scheduler_service is not None:
+        try:
+            scheduler_service.stop()
+            logger.info("定时任务调度器已停止（内嵌）")
+        except Exception:
+            logger.exception("停止定时任务调度器失败")
     
     logger.info(f"{settings.project_name} 关闭中...")
     
@@ -275,6 +295,18 @@ if static_path.exists():
 from app.api import api_router
 
 app.include_router(api_router, prefix="/api/v1")
+
+# 合并 Scheduler：挂载其内部路由，定时任务与后端同进程运行
+_scheduler_root = Path(__file__).resolve().parent.parent / "scheduler"
+if _scheduler_root.is_dir() and str(_scheduler_root) not in sys.path:
+    sys.path.insert(0, str(_scheduler_root))
+try:
+    from sched.api.routes.internal import router as scheduler_internal_router
+
+    app.include_router(scheduler_internal_router)
+    logger.info("已合并 Scheduler 内部路由")
+except Exception as exc:  # noqa: BLE001
+    logger.error(f"合并 Scheduler 路由失败: {exc}")
 
 
 @app.get("/health")

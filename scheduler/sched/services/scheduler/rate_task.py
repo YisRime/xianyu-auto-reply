@@ -25,8 +25,8 @@ from common.models.xy_account import XYAccount
 from common.models.xy_order import XYOrder
 from common.models.scheduled_rate_log import ScheduledRateLog
 from common.utils.time_utils import get_beijing_now_naive
-from app.core.config import get_settings
-from app.core.http_client import get_http_client
+from sched.core.config import get_settings
+from sched.core.http_client import get_http_client
 
 
 # 全局冷却缓存：订单号 -> 冷却过期时间

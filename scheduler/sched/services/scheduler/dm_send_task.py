@@ -36,8 +36,8 @@ from typing import Dict, List, Optional, Tuple
 from loguru import logger
 from sqlalchemy import and_, select
 
-from app.core.config import get_settings
-from app.core.http_client import get_http_client
+from sched.core.config import get_settings
+from sched.core.http_client import get_http_client
 from common.db.session import async_session_maker
 from common.models.listing_monitor_item import ListingMonitorItem
 from common.models.listing_monitor_task import ListingMonitorTask

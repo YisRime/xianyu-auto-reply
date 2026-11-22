@@ -22,8 +22,8 @@ import aiohttp
 from loguru import logger
 from sqlalchemy import exists, or_, select
 
-from app.core.config import get_settings
-from app.services.scheduler.token_captcha_renewal import (
+from sched.core.config import get_settings
+from sched.services.scheduler.token_captcha_renewal import (
     solve_token_captcha_and_merge_cookies,
 )
 from common.db.session import async_session_maker

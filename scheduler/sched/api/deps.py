@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from fastapi import Request
 
-from app.core.config import get_settings
+from sched.core.config import get_settings
 from common.utils.internal_auth import INTERNAL_AUTH_HEADER, require_valid_internal_token
 
 

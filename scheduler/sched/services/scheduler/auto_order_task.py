@@ -31,7 +31,7 @@ from typing import Dict, List, Optional, Tuple
 from loguru import logger
 from sqlalchemy import select
 
-from app.services.scheduler.auto_order_queue import (
+from sched.services.scheduler.auto_order_queue import (
     ORDER_ITEM_LOOKBACK_DAYS,
     OrderQueueRow,
     fetch_items_to_order,

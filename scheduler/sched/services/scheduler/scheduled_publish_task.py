@@ -1,7 +1,7 @@
 """Scheduler 中唯一的商品定时发布 runner。"""
 from __future__ import annotations
 
-from app.core.config import get_settings
+from sched.core.config import get_settings
 from common.services.scheduled_publish_task import ScheduledPublishTask
 
 

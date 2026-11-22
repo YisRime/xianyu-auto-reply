@@ -24,7 +24,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from app.core.config import get_settings
+from sched.core.config import get_settings
 from common.db.init_database import ddl_connection, init_advisory_lock
 from common.db.notification_schema import ensure_monitor_email_operation
 from common.db.kv_store import close_kv_store, get_kv_store
@@ -109,7 +109,7 @@ async def lifespan(app: FastAPI):
     log_retention_sync_task = asyncio.create_task(run_db_log_retention_sync())
     
     # 启动定时任务
-    from app.services.scheduler_service import get_scheduler_service
+    from sched.services.scheduler_service import get_scheduler_service
     scheduler = get_scheduler_service()
     scheduler.start()
     logger.info("定时任务管理器已启动")
@@ -129,7 +129,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"{settings.project_name} 关闭中...")
     
     # 关闭HTTP客户端
-    from app.core.http_client import close_http_client
+    from sched.core.http_client import close_http_client
     await close_http_client()
     logger.info("HTTP客户端已关闭")
 
@@ -243,7 +243,7 @@ async def global_exception_handler(request, exc):
 
 
 # 挂载API路由
-from app.api.routes import internal
+from sched.api.routes import internal
 
 app.include_router(internal.router)
 

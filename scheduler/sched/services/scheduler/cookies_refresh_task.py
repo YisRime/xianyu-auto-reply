@@ -31,9 +31,9 @@ from common.utils.cookie_refresh import (
     set_cookie_refresh_snapshot,
 )
 from common.utils.time_utils import get_beijing_now_naive
-from app.core.config import get_settings
-from app.core.http_client import get_http_client
-from app.services.cookies_refresh_browser_service import cookies_refresh_browser_service
+from sched.core.config import get_settings
+from sched.core.http_client import get_http_client
+from sched.services.cookies_refresh_browser_service import cookies_refresh_browser_service
 
 # 禁用账号连续失败次数阈值，超过则跳过处理
 _CONSECUTIVE_FAILURE_THRESHOLD = 10

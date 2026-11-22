@@ -14,8 +14,8 @@ from typing import Any
 from loguru import logger
 
 from common.models.xy_account import XYAccount
-from app.core.config import get_settings
-from app.core.http_client import get_http_client
+from sched.core.config import get_settings
+from sched.core.http_client import get_http_client
 
 
 @dataclass(slots=True)

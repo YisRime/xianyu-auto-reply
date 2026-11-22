@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional
 import aiohttp
 from loguru import logger
 
-from app.core.config import get_settings
+from sched.core.config import get_settings
 from common.utils.internal_auth import is_internal_api_url, merge_internal_auth_headers
 
 

@@ -202,7 +202,7 @@ class ScheduledTaskService:
     async def _notify_scheduler_reload(self, task_code: str) -> None:
         """通知调度器重新加载任务配置"""
         try:
-            from app.services.scheduler_service import get_scheduler_service
+            from sched.services.scheduler_service import get_scheduler_service
             scheduler = get_scheduler_service()
             await scheduler.reload_task_config(task_code)
         except Exception as e:

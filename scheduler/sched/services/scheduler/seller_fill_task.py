@@ -30,7 +30,7 @@ from typing import Dict, List, Optional, Tuple
 from loguru import logger
 from sqlalchemy import select
 
-from app.services.scheduler.seller_fill_queue import (
+from sched.services.scheduler.seller_fill_queue import (
     SELLER_FILL_LOOKBACK_DAYS,
     SellerFillQueueRow,
     fetch_items_to_fill,

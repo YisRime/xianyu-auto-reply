@@ -21,12 +21,8 @@ ENV_FILE="$WORK_DIR/.env"
 PROJECT_NAME="xianyu-auto-reply"
 # 本项目的容器名列表
 CONTAINERS=(
-    "xianyu-mysql"
-    "xianyu-redis"
     "xianyu-websocket"
     "xianyu-backend-web"
-    "xianyu-scheduler"
-    "xianyu-frontend"
 )
 
 echo "=========================================="

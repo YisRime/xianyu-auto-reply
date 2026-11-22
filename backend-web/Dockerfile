@@ -1,15 +1,20 @@
 # Backend-Web 服务 Dockerfile
-# 单阶段构建，直接使用Python源码
+# 单进程同时提供：HTTP API + 前端静态页面 + 定时任务调度（scheduler 已并入）
 #
-# 体积优化说明（详见 PR 描述）：
-#   1. 系统基础包层与 scheduler / websocket 保持完全一致，三个镜像可以复用同一层；
-#   2. gcc / libc6-dev 只在 pip 安装期间存在，同层安装并卸载，不会残留在镜像里；
-#   3. playwright 先用 --with-deps 装一轮系统依赖，patchright 复用这些依赖，
-#      不再触发第二次 apt 安装；
-#   4. 每层结束都清理 apt lists 与缓存，避免无谓残留。
+# 说明：
+#   1. 第一阶段用 node 构建 frontend/dist，产物交给后端托管，镜像内不再需要 nginx；
+#   2. 依赖取 backend-web 与 scheduler 两份 pyproject 的并集（后者提��� apscheduler）；
+#   3. 不再 COPY launcher（该模块已删除）。
 
-# 基础镜像走 docker.io 官方名（由 buildx 的 buildkitd 镜像加速配置拉取，见流水线 BUILDKIT 配置）
-FROM python:3.11-slim
+FROM node:18-alpine AS frontend-builder
+RUN npm config set registry https://registry.npmmirror.com
+WORKDIR /build
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
+
+FROM python:3.12-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -17,47 +22,52 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV TZ=Asia/Shanghai
 
-# 配置国内镜像源
 RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || \
     sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list 2>/dev/null || true
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
 
-# 系统基础包：三个服务保持完全一致的命令，这层才能跨镜像复用
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates \
         fonts-dejavu-core fonts-liberation \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制项目源码
 COPY common /app/common
 COPY backend-web /app/backend-web
-COPY launcher /app/launcher
+# backend-web 运行时会 import scheduler/sched 包（定时任务已并入）
+COPY scheduler /app/scheduler
+COPY --from=frontend-builder /build/dist /app/frontend/dist
 
-# 从pyproject.toml提取依赖
-RUN python -c "\
-import tomllib; \
-deps = tomllib.load(open('/app/backend-web/pyproject.toml','rb')).get('project',{}).get('dependencies',[]); \
-open('/tmp/requirements.txt','w').write('\n'.join(deps))"
+RUN python - <<'PY'
+import io, tomllib
+deps = []
+for proj in ("/app/backend-web/pyproject.toml", "/app/scheduler/pyproject.toml"):
+    with open(proj, "rb") as fh:
+        deps.extend(tomllib.load(fh).get("project", {}).get("dependencies", []))
+seen, uniq = set(), []
+for dep in deps:
+    name = dep.split(";")[0].strip()
+    key = name.split("=")[0].split(">")[0].split("<")[0].split("[")[0].strip().lower()
+    if key in seen:
+        continue
+    seen.add(key)
+    uniq.append(name)
+io.open("/tmp/requirements.txt", "w", encoding="utf-8").write("\n".join(uniq))
+PY
 
-# 安装依赖：编译工具与安装动作放在同一层，装完立即卸载，镜像里不留 gcc 及其依赖
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
     && apt-get purge -y --auto-remove gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 
-# 浏览器：playwright 安装系统依赖，patchright 复用同一套依赖，避免第二次 apt
 RUN python -m playwright install --with-deps chromium \
     && python -m patchright install chromium \
     && rm -rf /var/lib/apt/lists/* /root/.cache/ms-playwright/.links
 
-# 创建日志目录
-RUN mkdir -p /app/backend-web/logs /app/static/uploads
+RUN mkdir -p /app/backend-web/logs /app/backend-web/static/uploads /app/data
 
-# 暴露端口
 EXPOSE 8089
 
-# 启动服务
 CMD ["python", "backend-web/main.py"]

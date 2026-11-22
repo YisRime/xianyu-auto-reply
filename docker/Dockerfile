@@ -43,8 +43,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && apt-get purge -y --auto-remove gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* /root/.cache /app/requirements.txt
 
-# 只安装一份 Chromium：patchright 的浏览器 + 系统依赖，playwright 通过目录软链复用
-RUN python -m patchright install --with-deps --no-shell chromium \
+# 只安装一份 Chrome（chromium + headless shell）：patchright 的安装 + 系统依赖，
+# playwright 期望的 revision 目录由下面的软链指向同一份文件
+RUN python -m patchright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 
 # 让 playwright 的期望版本目录指向 patchright 安装的那份 Chromium（同一文件，零额外空间）
@@ -57,31 +58,39 @@ import patchright
 import playwright
 
 
-def chromium_revision(module) -> str:
+def revisions(module) -> dict:
     manifest = pathlib.Path(module.__file__).parent / "driver" / "package" / "browsers.json"
+    out = {}
     for item in json.loads(manifest.read_text(encoding="utf-8"))["browsers"]:
-        if item.get("name") == "chromium":
-            return str(item["revision"])
-    raise SystemExit(f"chromium revision not found in {manifest}")
+        out[item["name"]] = str(item["revision"])
+    return out
 
 
 root = pathlib.Path(os.environ["PLAYWRIGHT_BROWSERS_PATH"])
-patchright_rev = chromium_revision(patchright)
-playwright_rev = chromium_revision(playwright)
+pw = revisions(playwright)
+pr = revisions(patchright)
 
-source = root / f"chromium-{patchright_rev}"
-target = root / f"chromium-{playwright_rev}"
-
-if not source.is_dir():
-    raise SystemExit(f"patchright chromium missing: {source}")
-
-if playwright_rev == patchright_rev:
-    print(f"same revision {patchright_rev}, nothing to link")
-elif target.exists() or target.is_symlink():
-    print(f"{target.name} already present, nothing to link")
-else:
-    target.symlink_to(source, target_is_directory=True)
-    print(f"linked {target.name} -> {source.name}")
+# chromium 与 chromium-headless-shell 都要复用；
+# headless 启动时 playwright 会直接找 headless shell，缺了会报 Executable doesn't exist。
+for name in ("chromium", "chromium-headless-shell"):
+    # 目录名把浏览器名里的 - 换成 _，例如 chromium_headless_shell-1255
+    folder = name.replace("-", "_")
+    pr_rev = pr.get(name)
+    pw_rev = pw.get(name)
+    if not pr_rev or not pw_rev:
+        print(f"skip {name}: revision missing")
+        continue
+    source = root / f"{folder}-{pr_rev}"
+    target = root / f"{folder}-{pw_rev}"
+    if not source.is_dir():
+        raise SystemExit(f"patchright {name} missing: {source}")
+    if pr_rev == pw_rev:
+        print(f"{name}: same revision {pr_rev}, nothing to link")
+    elif target.exists() or target.is_symlink():
+        print(f"{name}: {target.name} already present, nothing to link")
+    else:
+        target.symlink_to(source, target_is_directory=True)
+        print(f"linked {target.name} -> {source.name}")
 PY
 
 COPY common /app/common

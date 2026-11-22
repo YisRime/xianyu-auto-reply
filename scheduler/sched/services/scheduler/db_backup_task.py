@@ -74,7 +74,8 @@ class DbBackupTaskService:
         start_time = time.monotonic()
 
         settings = get_settings()
-        database = settings.mysql_database
+        # SQLite 单文件模式使用文件名作为备份标识，MySQL 模式使用库名
+        database = settings.sqlite_file.name if settings.is_sqlite else settings.mysql_database
 
         backup_root = ensure_backup_root()
         now = get_beijing_now()
@@ -161,6 +162,16 @@ class DbBackupTaskService:
 
     async def _list_tables(self, session: AsyncSession, database: str) -> list[str]:
         """查询当前数据库下的所有基础表（不含视图）。"""
+        if get_settings().is_sqlite:
+            result = await session.execute(
+                text(
+                    "SELECT name FROM sqlite_master "
+                    "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' "
+                    "ORDER BY name"
+                )
+            )
+            return [row[0] for row in result.all()]
+
         stmt = text(
             """
             SELECT TABLE_NAME
@@ -179,20 +190,36 @@ class DbBackupTaskService:
         fp.write(f"-- 数据库: {database}\n")
         fp.write(f"-- 备份时间(北京时间): {now.strftime('%Y-%m-%d %H:%M:%S')}\n")
         fp.write("-- 说明: 本文件由定时任务自动生成。普通表备份结构与数据，日志表仅备份结构\n\n")
-        fp.write("SET NAMES utf8mb4;\n")
-        fp.write("SET FOREIGN_KEY_CHECKS=0;\n\n")
+        if get_settings().is_sqlite:
+            fp.write("PRAGMA foreign_keys=OFF;\n")
+            fp.write("BEGIN TRANSACTION;\n\n")
+        else:
+            fp.write("SET NAMES utf8mb4;\n")
+            fp.write("SET FOREIGN_KEY_CHECKS=0;\n\n")
 
     @staticmethod
     def _write_footer(fp) -> None:
         """写入备份文件尾部。"""
-        fp.write("\nSET FOREIGN_KEY_CHECKS=1;\n")
+        if get_settings().is_sqlite:
+            fp.write("\nCOMMIT;\nPRAGMA foreign_keys=ON;\n")
+        else:
+            fp.write("\nSET FOREIGN_KEY_CHECKS=1;\n")
 
     async def _dump_table(self, session: AsyncSession, fp, table: str) -> int:
         """导出单张表的结构与数据，返回导出的数据行数。"""
         # 1. 表结构
-        create_stmt = await session.execute(text(f"SHOW CREATE TABLE `{table}`"))
-        create_row = create_stmt.first()
-        create_sql = create_row[1] if create_row and len(create_row) > 1 else ""
+        if get_settings().is_sqlite:
+            create_row = (
+                await session.execute(
+                    text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :table"),
+                    {"table": table},
+                )
+            ).first()
+            create_sql = create_row[0] if create_row else ""
+        else:
+            create_stmt = await session.execute(text(f"SHOW CREATE TABLE `{table}`"))
+            create_row = create_stmt.first()
+            create_sql = create_row[1] if create_row and len(create_row) > 1 else ""
 
         fp.write(f"\n-- ----------------------------\n")
         fp.write(f"-- 表结构: {table}\n")
@@ -233,6 +260,11 @@ class DbBackupTaskService:
 
     async def _get_columns(self, session: AsyncSession, table: str) -> list[str]:
         """按表定义顺序获取列名列表。"""
+        if get_settings().is_sqlite:
+            quoted = table.replace('"', '""')
+            result = await session.execute(text(f'PRAGMA table_info("{quoted}")'))
+            return [row[1] for row in result.all()]
+
         stmt = text(
             """
             SELECT COLUMN_NAME
@@ -244,8 +276,7 @@ class DbBackupTaskService:
         result = await session.execute(stmt, {"table": table})
         return [row[0] for row in result.all()]
 
-    @staticmethod
-    def _format_value(value) -> str:
+    def _format_value(self, value) -> str:
         """将单个字段值格式化为安全的 SQL 字面量。"""
         if value is None:
             return "NULL"
@@ -257,8 +288,11 @@ class DbBackupTaskService:
             return f"0x{value.hex()}" if value else "''"
         if isinstance(value, datetime):
             return "'" + value.strftime("%Y-%m-%d %H:%M:%S") + "'"
-        # 其余统一按字符串处理并转义特殊字符，防止破坏 SQL 结构
         text_value = str(value)
+        if get_settings().is_sqlite:
+            # SQLite 字符串使用单引号双写转义，不识别反斜杠转义
+            return "'" + text_value.replace("'", "''") + "'"
+        # 其余统一按字符串处理并转义特殊字符，防止破坏 SQL 结构
         escaped = (
             text_value.replace("\\", "\\\\")
             .replace("'", "\\'")

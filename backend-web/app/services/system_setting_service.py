@@ -25,6 +25,8 @@ from common.utils.text_utils import escape_xss
 SENSITIVE_KEYS = {
     "admin_password_hash",
     "security.internal_api_token",
+    # 旧版本遗留的 JWT 密钥，已不再使用，但也不能通过设置接口返回
+    "security.jwt_secret_key",
 }
 
 DEFAULT_LOGIN_SYSTEM_TITLE = "高效专业的\n闲鱼自动化管理平台"
@@ -236,7 +238,7 @@ class SystemSettingService:
         settings: dict[str, str] = {}
         for entry in result.scalars().all():
             # JWT 密钥和服务间令牌即使内部调用 include_sensitive=True 也不返回。
-            if entry.key == "security.internal_api_token":
+            if entry.key in {"security.internal_api_token", "security.jwt_secret_key"}:
                 continue
             if not include_sensitive and entry.key in SENSITIVE_KEYS:
                 continue

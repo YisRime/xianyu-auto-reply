@@ -72,6 +72,7 @@ def _compile_sql_with_params(statement, parameters):
         # 敏感键可能通过 ORM 参数绑定出现，先识别键再仅脱敏对应值。
         sensitive_setting_keys = {
             "security.internal_api_token",
+            "security.jwt_secret_key",
             "admin_password_hash",
         }
 

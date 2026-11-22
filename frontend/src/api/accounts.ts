@@ -771,7 +771,8 @@ export const getOrderAmountTrend = async (): Promise<OrderTrendItem[]> => {
   if (!response.success || !response.data) {
     throw new Error(response.message || '获取订单金额趋势失败')
   }
-  return response.data.trend
+  // 后端异常时可能返回非预期结构，兜底为空数组，避免前端 .map 崩溃
+  return Array.isArray(response.data.trend) ? response.data.trend : []
 }
 
 // 导出账号数据为Excel

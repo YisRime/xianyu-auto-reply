@@ -52,7 +52,6 @@ const RiskLogs = React.lazy(() => import('@/pages/admin/RiskLogs').then(m => ({ 
 const AccountLoginLogs = React.lazy(() => import('@/pages/admin/AccountLoginLogs').then(m => ({ default: m.AccountLoginLogs })))
 const EmailLogs = React.lazy(() => import('@/pages/admin/EmailLogs').then(m => ({ default: m.EmailLogs })))
 const DbBackupLogs = React.lazy(() => import('@/pages/admin/DbBackupLogs').then(m => ({ default: m.DbBackupLogs })))
-const DataManagement = React.lazy(() => import('@/pages/admin/DataManagement').then(m => ({ default: m.DataManagement })))
 const ScheduledTasks = React.lazy(() => import('@/pages/admin/ScheduledTasks').then(m => ({ default: m.ScheduledTasks })))
 const RedeliveryBatches = React.lazy(() => import('@/pages/redeliveryLogs/RedeliveryBatches').then(m => ({ default: m.RedeliveryBatches })))
 const RedeliveryBatchDetailPage = React.lazy(() => import('@/pages/redeliveryLogs/RedeliveryBatchDetail').then(m => ({ default: m.RedeliveryBatchDetailPage })))
@@ -170,7 +169,6 @@ function App() {
             <Route path="admin/db-backup-logs" element={<DbBackupLogs />} />
             <Route path="admin/auto-reply-logs" element={<Navigate to="/message-logs" replace />} />
             <Route path="admin/risk-logs" element={<Navigate to="/risk-logs" replace />} />
-            <Route path="admin/data" element={<DataManagement />} />
             <Route path="admin/redelivery-batches" element={<RedeliveryBatches />} />
             <Route path="admin/redelivery-batches/:batchId" element={<RedeliveryBatchDetailPage />} />
             <Route path="admin/rate-batches" element={<RateBatches />} />

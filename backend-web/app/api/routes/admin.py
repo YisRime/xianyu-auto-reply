@@ -5,7 +5,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -24,7 +23,6 @@ from common.models.scheduled_red_flower_log import ScheduledRedFlowerLog
 from common.models.scheduled_login_renew_log import ScheduledLoginRenewLog
 from common.models.scheduled_close_notice_log import ScheduledCloseNoticeLog
 from common.models.user import User, UserRole, UserStatus
-from common.models.user_setting import UserSetting
 from common.models.xy_account import XYAccount
 from common.models.xy_catalog_item import XYCatalogItem
 from common.models.xy_keyword_rule import XYKeywordRule
@@ -37,30 +35,6 @@ from app.services.scheduled_batch_log_service import ScheduledBatchLogService
 from common.utils.time_utils import get_beijing_now_naive, safe_isoformat
 router = APIRouter(tags=["admin"])
 settings = get_settings()
-
-TABLE_MAP = {
-    "users": User.__table__,
-    "xy_accounts": XYAccount.__table__,
-    "xy_catalog_items": XYCatalogItem.__table__,
-    "xy_keyword_rules": XYKeywordRule.__table__,
-    "xy_orders": XYOrder.__table__,
-    "xy_notification_channels": NotificationChannel.__table__,
-    "xy_message_notifications": MessageNotification.__table__,
-    "xy_account_login_logs": XYAccountLoginLog.__table__,
-    "xy_risk_control_logs": XYRiskControlLog.__table__,
-}
-
-LEGACY_TABLE_ALIASES = {
-    "cookies": "xy_accounts",
-    "item_info": "xy_catalog_items",
-    "default_replies": "xy_keyword_rules",
-    "notification_channels": "xy_notification_channels",
-    "message_notifications": "xy_message_notifications",
-    "keywords": "xy_keyword_rules",
-    "risk_control_logs": "xy_risk_control_logs",
-    "account_login_logs": "xy_account_login_logs",
-}
-
 
 def _build_user_payload(
     user: User,
@@ -159,42 +133,6 @@ async def clear_account_login_logs(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"清理账号登录日志失败: {str(e)}",
         )
-
-
-@router.get("/data/{table_name}")
-async def get_table_data(
-    table_name: str,
-    _: User = Depends(deps.get_current_admin_user),
-    session: AsyncSession = Depends(deps.get_db_session),
-) -> dict:
-    normalized = table_name.lower()
-    mapped_name = LEGACY_TABLE_ALIASES.get(normalized, normalized)
-    table = TABLE_MAP.get(mapped_name)
-    if table is None:
-        return {"success": True, "data": [], "columns": [], "count": 0}
-
-    stmt = select(table)
-    result = await session.execute(stmt)
-    rows = result.mappings().all()
-    data = jsonable_encoder(rows)
-    columns = [column.name for column in table.columns]
-    return {"success": True, "data": data, "columns": columns, "count": len(data)}
-
-
-@router.delete("/data/{table_name}")
-async def clear_table_placeholder(table_name: str) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        content={"success": False, "message": f"尚未支持清空表 {table_name} 的接口"},
-    )
-
-
-@router.delete("/data/{table_name}/{record_id}")
-async def delete_table_record_placeholder(table_name: str, record_id: str) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        content={"success": False, "message": f"尚未支持删除 {table_name} 记录 {record_id}"},
-    )
 
 
 @router.get("/logs")

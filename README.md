@@ -609,9 +609,9 @@ Vite 开发/预览环境和桌面启动器会识别公开接口的百分号编�
 
 ### 个人 Token 远程配置
 
-用户系统已移除，不再提供「个人设置」页面入口；远程 URL 和秘钥直接写入 `xy_user_settings` 表的 `token.remote_url`、`token.remote_secret_key`。秘钥请到 https://api.xianyushop.shop 获取，使用接口列表中的“闲鱼获取Token”接口。
+用户系统与个人设置已移除；Token 远程配置改为系统设置 `xy_system_settings` 中的 `token.remote_url`、`token.remote_secret_key`。秘钥请到 https://api.xianyushop.shop 获取，使用接口列表中的“闲鱼获取Token”接口。
 
-配置按当前登录用户存入现有 `xy_user_settings` 表的 `token.remote_url`、`token.remote_secret_key`，两个配置项在同一事务中保存，无需新增表、字段或初始化数据。
+两个配置项保存在 `xy_system_settings` 表中，在同一事务中保存。
 
 测试仅在 Cookie 参数校验失败时视为连通成功；秘钥、余额或限流等错误仍提示失败，风控日志与测试结果一致。普通远程服务错误不会触发闲鱼滑块或令牌过期重试，接口透传的真实验证链接和协议错误会保留。
 

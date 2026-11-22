@@ -26,7 +26,6 @@ from common.models.xy_keyword_rule import XYKeywordRule
 from common.models.card import Card
 from common.models.default_reply import DefaultReply
 from common.models.confirm_receipt_message import ConfirmReceiptMessage
-from common.models.user_setting import UserSetting
 from common.models.system_setting import SystemSetting
 from common.utils.time_utils import get_beijing_now, get_beijing_now_naive
 from common.services.notification_types import resolve_stored_notification_types
@@ -337,43 +336,11 @@ class DBManagerCompat:
             return True
         return result
 
-    
-    def get_user_setting_by_cookie_id(self, cookie_id: str, key: str) -> Optional[str]:
-        """通过cookie_id获取对应用户的个人设置值
-        
-        Args:
-            cookie_id: 账号标识
-            key: 设置键名
-            
-        Returns:
-            设置值，不存在返回None
-        """
-        async def _query(session_maker):
-            async with session_maker() as session:
-                # 先获取 owner_id
-                account_stmt = select(XYAccount.owner_id).where(XYAccount.account_id == cookie_id)
-                account_result = await session.execute(account_stmt)
-                owner_id = account_result.scalar_one_or_none()
-                if not owner_id:
-                    return None
-                # 查询用户设置
-                setting_stmt = select(UserSetting.value).where(
-                    UserSetting.user_id == owner_id,
-                    UserSetting.key == key
-                )
-                setting_result = await session.execute(setting_stmt)
-                return setting_result.scalar_one_or_none()
-        return self._run_async(_query)
-
     def get_redelivery_trigger_keyword(self) -> Optional[str]:
-        """读取全局「重发货触发关键字」。
-
-        该配置旧版本按用户保存在 xy_user_settings，用户系统移除后改为
-        xy_system_settings 全局配置；系统设置为空时回退读取旧记录，
-        保证升级前的配置仍然生效。
+        """读取全局「重发货触发关键字」（xy_system_settings）。
 
         Returns:
-            去除首尾空白后的关键字；未配置时返回空字符串或 None。
+            去除首尾空白后的关键字；未配置时返回 None。
         """
         async def _query(session_maker):
             async with session_maker() as session:
@@ -381,17 +348,7 @@ class DBManagerCompat:
                     SystemSetting.key == 'redelivery_trigger_keyword'
                 )
                 value = (await session.execute(setting_stmt)).scalar_one_or_none()
-                if value and value.strip():
-                    return value.strip()
-                # 兼容旧版本：按用户存储的记录仍然生效
-                legacy_stmt = select(UserSetting.value).where(
-                    UserSetting.key == 'redelivery_trigger_keyword',
-                    UserSetting.value != '',
-                ).limit(1)
-                legacy_value = (await session.execute(legacy_stmt)).scalars().first()
-                if legacy_value and legacy_value.strip():
-                    return legacy_value.strip()
-                return value
+                return value.strip() if value and value.strip() else None
         return self._run_async(_query)
 
     def update_cookie_account_info(self, cookie_id: str, **kwargs) -> bool:

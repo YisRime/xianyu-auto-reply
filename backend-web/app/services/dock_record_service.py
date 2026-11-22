@@ -570,37 +570,21 @@ class DockRecordService:
         }
 
     async def _batch_get_source_contacts(self, user_ids: list[int]) -> Dict[int, Dict[str, str]]:
-        """批量查询用户联系方式（微信、QQ来自UserSetting，邮箱来自User表）
-        
+        """批量查询用户联系方式（仅邮箱，来自 User 表）。
+
         Returns:
-            {user_id: {"wechat": ..., "qq": ..., "email": ...}}
+            {user_id: {"wechat": "", "qq": "", "email": ...}}
         """
-        from common.models.user_setting import UserSetting
-        
         unique_ids = list(set(uid for uid in user_ids if uid))
         if not unique_ids:
             return {}
         
         contact_map: Dict[int, Dict[str, str]] = {uid: {"wechat": "", "qq": "", "email": ""} for uid in unique_ids}
         
-        # 查询邮箱
         email_stmt = select(User.id, User.email).where(User.id.in_(unique_ids))
         email_result = await self.session.execute(email_stmt)
         for row in email_result.all():
             contact_map[row[0]]["email"] = row[1] or ""
-        
-        # 查询微信和QQ（从 UserSetting 表）
-        setting_stmt = select(UserSetting.user_id, UserSetting.key, UserSetting.value).where(
-            UserSetting.user_id.in_(unique_ids),
-            UserSetting.key.in_(["contact_wechat", "contact_qq"]),
-        )
-        setting_result = await self.session.execute(setting_stmt)
-        for row in setting_result.all():
-            uid, key, value = row[0], row[1], row[2]
-            if key == "contact_wechat":
-                contact_map[uid]["wechat"] = value or ""
-            elif key == "contact_qq":
-                contact_map[uid]["qq"] = value or ""
         
         return contact_map
 

@@ -7,7 +7,6 @@ import { getItems } from '@/api/items'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import type { Keyword, Account, Item } from '@/types'
-import { getUserSetting } from '@/api/settings'
 type LocationContactReplyValue = {
   location_name: string
   location_longitude: string
@@ -261,20 +260,6 @@ export function useKeywordPage() {
     }
 
     if (replyType === 'external_contact') {
-      try {
-        const [urlResult, secretResult] = await Promise.all([
-          getUserSetting('location_chat.remote_url'),
-          getUserSetting('location_chat.remote_secret_key'),
-        ])
-        if (!urlResult.value?.trim() || !secretResult.value?.trim()) {
-          addToast({ type: 'warning', message: '请先配置位置聊天的远程URL和秘钥后再使用外部联系方式回复' })
-          return
-        }
-      } catch {
-        addToast({ type: 'error', message: '无法读取位置聊天远程配置，请先填写远程URL和秘钥' })
-        return
-      }
-
       if (!location.location_title.trim()) {
         setLocation((current) => ({ ...current, location_title: DEFAULT_LOCATION_TITLE }))
       }

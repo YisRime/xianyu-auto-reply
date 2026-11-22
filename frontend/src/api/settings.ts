@@ -195,18 +195,6 @@ export const importUserBackup = async (file: File): Promise<ApiResponse> => {
   return post('/api/v1/backup/import', formData)
 }
 
-// ========== 用户设置 ==========
-
-// 获取单个用户设置
-export const getUserSetting = async (key: string): Promise<{ success: boolean; value?: string }> => {
-  try {
-    const data = await get<{ value: string }>(`/api/v1/user-settings/${key}`)
-    return { success: true, value: data.value }
-  } catch {
-    return { success: false }
-  }
-}
-
 export interface LocationChatRemoteTestResult {
   success: boolean
   message?: string

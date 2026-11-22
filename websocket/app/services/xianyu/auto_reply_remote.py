@@ -7,7 +7,6 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from common.models.user_setting import UserSetting
 from common.utils.default_reply_api import call_reply_api
 
 

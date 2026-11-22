@@ -18,7 +18,6 @@ from common.models.account_login_log import XYAccountLoginLog
 from common.models.email_log import XYEmailLog
 from common.models.data_dictionary import XYDataDictionary
 from common.models.system_setting import SystemSetting
-from common.models.user_setting import UserSetting
 from common.models.notification_channel import NotificationChannel
 from common.models.message_notification import MessageNotification
 from common.models.goofish_crawl_job import GoofishCrawlJob
@@ -87,7 +86,6 @@ __all__ = [
     "XYEmailLog",
     "XYDataDictionary",
     "SystemSetting",
-    "UserSetting",
     "NotificationChannel",
     "MessageNotification",
     "GoofishCrawlJob",

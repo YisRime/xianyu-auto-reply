@@ -1,4 +1,4 @@
-﻿"""
+"""
 关键词服务
 
 功能：
@@ -19,7 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from common.models.xy_account import XYAccount
 from common.models.xy_catalog_item import XYCatalogItem
 from common.models.xy_keyword_rule import XYKeywordRule
-from common.models.user_setting import UserSetting
 
 
 class KeywordService:

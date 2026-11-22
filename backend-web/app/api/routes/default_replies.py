@@ -10,7 +10,6 @@ from common.models.user import User
 from common.utils.auth_scope import resolve_owner_scope
 from common.utils.local_image_upload import ImageUploadError, save_uploaded_image
 from common.utils.default_reply_api import validate_api_url, normalize_api_timeout
-from common.models.user_setting import UserSetting
 from sqlalchemy import select
 from app.services.account_service import AccountService
 from app.services.default_reply_service import DefaultReplyService

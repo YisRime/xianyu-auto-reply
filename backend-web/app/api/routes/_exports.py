@@ -10,7 +10,6 @@ from fastapi import APIRouter
 
 # 导入所有路由模块
 from . import (
-    activation,
     admin,
     ai,
     ai_listing,
@@ -71,7 +70,6 @@ from . import (
     system_settings,
     token_renewal_logs,
     upload,
-    user_settings,
     version,
 )
 
@@ -86,11 +84,6 @@ api_router.include_router(public_status.router, tags=["公开状态"])
 # 注意：路由文件中已定义prefix的，这里不再重复添加prefix
 # 路由文件中未定义prefix的，在这里统一添加prefix
 
-# 激活码（公开接口，无需登录）
-api_router.include_router(activation.router, prefix="/activation", tags=["激活码"])
-
-# 用户设置（内部功能使用，无页面入口）
-api_router.include_router(user_settings.router, prefix="/user-settings", tags=["用户设置"])
 
 # 账号管理
 api_router.include_router(cookies.router, prefix="/cookies", tags=["账号管理"])

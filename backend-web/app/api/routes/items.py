@@ -11,7 +11,6 @@ from common.models.user import User
 from common.schemas.common import ApiResponse
 from common.utils.auth_scope import resolve_owner_scope
 from common.utils.default_reply_api import validate_api_url, normalize_api_timeout
-from common.models.user_setting import UserSetting
 from sqlalchemy import select
 from common.schemas.item import (
     ItemBatchDeleteRequest,

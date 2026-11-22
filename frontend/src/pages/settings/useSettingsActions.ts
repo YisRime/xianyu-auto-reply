@@ -5,7 +5,6 @@
  */
 import { useCallback, useState } from 'react'
 import {
-  updateDistributionSettings,
   updateLoginBrandingSettings,
   updateProxySettings,
   updateSystemSettings,
@@ -17,7 +16,6 @@ import { getApiErrorMessage } from '@/utils/apiError'
 import { isValidEmail } from '@/utils/email'
 import type {
   LoginBrandingSettings,
-  PaymentChannel,
   SystemSettings,
   ThemeAppearanceSettings,
   ThemeFontSettings,
@@ -93,63 +91,9 @@ export function useSettingsActions(getSettings: SettingsGetter) {
         smtp_user: smtpUser,
         smtp_password: String(settings.smtp_password || ''),
         smtp_from: String(settings.smtp_from || ''),
-        'auth.email_allowed_suffixes': String(settings['auth.email_allowed_suffixes'] ?? ''),
-        'auth.email_denied_suffixes': String(settings['auth.email_denied_suffixes'] ?? ''),
-        'auth.email_denied_message': String(settings['auth.email_denied_message'] ?? ''),
       }, '发件人设置保存成功', '发件人设置保存失败')
     })
   }, [addToast, getSettings, persist, run])
-
-  const savePayment = useCallback(async () => {
-    const settings = getSettings()
-    if (!settings) return
-    const channel = String(settings['payment.channel'] || 'alipay') as PaymentChannel
-    const payload: Partial<SystemSettings> = channel === 'zzcode'
-      ? { 'payment.channel': channel, 'zzcode.pid': String(settings['zzcode.pid'] || ''), 'zzcode.key': String(settings['zzcode.key'] || ''), 'zzcode.gateway': String(settings['zzcode.gateway'] || ''), 'zzcode.notify_url': String(settings['zzcode.notify_url'] || ''), 'zzcode.return_url': String(settings['zzcode.return_url'] || ''), 'zzcode.pay_types': String(settings['zzcode.pay_types'] || '') }
-      : { 'payment.channel': channel, 'alipay.app_id': String(settings['alipay.app_id'] || ''), 'alipay.gateway_url': String(settings['alipay.gateway_url'] || ''), 'alipay.private_key': String(settings['alipay.private_key'] || ''), 'alipay.alipay_public_key': String(settings['alipay.alipay_public_key'] || ''), 'alipay.notify_url': String(settings['alipay.notify_url'] || '') }
-    await run('payment', async () => {
-      await persist(payload, '支付配置保存成功', '支付配置保存失败')
-    })
-  }, [getSettings, persist, run])
-
-  const saveWithdraw = useCallback(async () => {
-    const settings = getSettings()
-    if (!settings) return
-    const notifyEmail = String(settings['withdraw.notify_email'] || '').trim()
-    if (notifyEmail && !isValidEmail(notifyEmail)) {
-      addToast({ type: 'error', message: '提现通知邮箱格式不正确' })
-      return
-    }
-    const minAmount = String(settings['withdraw.min_amount'] || '').trim()
-    if (minAmount && (!/^\d+(\.\d{1,2})?$/.test(minAmount) || Number(minAmount) < 0)) {
-      addToast({ type: 'error', message: '最低提现金额必须为非负数字（最多两位小数）' })
-      return
-    }
-    await run('withdraw', async () => { await persist({ 'withdraw.notify_email': notifyEmail, 'withdraw.min_amount': minAmount }, '提现配置保存成功', '提现配置保存失败') })
-  }, [addToast, getSettings, persist, run])
-
-  const saveDistribution = useCallback(async () => {
-    const settings = getSettings()
-    if (!settings) return
-    const feeType = String(settings['distribution.fee_type'] || 'fixed')
-    const feeRate = String(settings['distribution.fee_rate'] || '').trim()
-    if (!['fixed', 'percent'].includes(feeType)) {
-      addToast({ type: 'error', message: '手续费类型无效，请重新选择' })
-      return
-    }
-    if (feeRate && (!/^\d+(\.\d{1,2})?$/.test(feeRate) || Number(feeRate) < 0)) {
-      addToast({ type: 'error', message: '手续费必须为非负数字（最多两位小数）' })
-      return
-    }
-    await run('distribution', async () => {
-      try {
-        const result = await updateDistributionSettings({ 'distribution.fee_type': feeType, 'distribution.fee_rate': feeRate })
-        addToast(result.success ? { type: 'success', message: result.message || '分销设置保存成功' } : { type: 'error', message: result.message || '分销设置保存失败' })
-      } catch (error) {
-        addToast({ type: 'error', message: getApiErrorMessage(error, '分销设置保存失败') })
-      }
-    })
-  }, [addToast, getSettings, run])
 
   const saveProxy = useCallback(async () => {
     const settings = getSettings()
@@ -183,9 +127,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     saving: (key: string) => savingKeys.has(key),
     saveBasic,
     saveSmtp,
-    savePayment,
-    saveWithdraw,
-    saveDistribution,
     saveProxy,
     saveLoginBranding: (settings: LoginBrandingSettings) => saveSpecial('branding', () => updateLoginBrandingSettings({ ...settings }), '登录品牌设置保存成功', '登录品牌设置保存失败'),
     saveThemeAppearance: (settings: ThemeAppearanceSettings) => saveSpecial('themeAppearance', () => updateThemeAppearanceSettings({ ...settings }), '主题外观保存成功', '主题外观保存失败'),

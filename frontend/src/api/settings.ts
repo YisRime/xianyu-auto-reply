@@ -25,14 +25,10 @@ const AI_SETTINGS_PREFIX = '/api/v1/ai-reply-settings'
 const ADMIN_PREFIX = '/api/v1/admin'
 const DEFAULT_LOGIN_BRANDING_SETTINGS: LoginBrandingSettings = {
   'login.system_name': '闲鱼管理系统',
-  'login.system_title': '高效专业的\n闲鱼自动化管理平台',
-  'login.system_description': '自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题',
 }
 
 const LOGIN_BRANDING_SETTING_KEYS: Array<keyof LoginBrandingSettings> = [
   'login.system_name',
-  'login.system_title',
-  'login.system_description',
 ]
 
 const BOOLEAN_SYSTEM_SETTING_KEYS = ['smtp_use_tls', 'smtp_use_ssl', 'runtime.is_exe_mode', 'account.face_verify_timeout_disable', 'proxy.enabled']
@@ -66,13 +62,8 @@ export const getDefaultLoginBrandingSettings = (): LoginBrandingSettings => ({ .
 
 export const normalizeLoginBrandingSettings = (settings?: Partial<SystemSettings> | null): LoginBrandingSettings => {
   const systemName = settings?.['login.system_name']
-  const systemTitle = settings?.['login.system_title']
-  const systemDescription = settings?.['login.system_description']
-
   return {
     'login.system_name': typeof systemName === 'string' && systemName.trim() ? systemName : DEFAULT_LOGIN_BRANDING_SETTINGS['login.system_name'],
-    'login.system_title': typeof systemTitle === 'string' && systemTitle.trim() ? systemTitle : DEFAULT_LOGIN_BRANDING_SETTINGS['login.system_title'],
-    'login.system_description': typeof systemDescription === 'string' && systemDescription.trim() ? systemDescription : DEFAULT_LOGIN_BRANDING_SETTINGS['login.system_description'],
   }
 }
 
@@ -173,22 +164,6 @@ export const updateProxySettings = async (settings?: Partial<SystemSettings> | n
   return updateSystemSettingsBatch(normalized as Partial<SystemSettings>)
 }
 
-// ========== 分销设置（独立保存） ==========
-
-// 独立保存分销设置：只提交 distribution.* 相关键，不触碰其他设置
-// 与页面右上角"保存设置"按钮分离，避免影响其他未改动的设置
-export const updateDistributionSettings = async (settings?: Partial<SystemSettings> | null): Promise<ApiResponse> => {
-  const feeType = settings?.['distribution.fee_type']
-  const feeRate = settings?.['distribution.fee_rate']
-
-  const payload: Record<string, string> = {
-    'distribution.fee_type': typeof feeType === 'string' && feeType ? feeType : 'fixed',
-    'distribution.fee_rate': typeof feeRate === 'string' ? feeRate : '',
-  }
-
-  return updateSystemSettingsBatch(payload as Partial<SystemSettings>)
-}
-
 // 获取备份文件列表（管理员）
 export const getBackupList = async (): Promise<{ backups: Array<{ filename: string; size: number; size_mb: number; modified_time: string }>; total: number }> => {
   return get(`${ADMIN_PREFIX}/backup/list`)
@@ -244,22 +219,3 @@ export interface LocationChatRemoteTestResult {
 
 
 
-
-// ========== 群二维码管理 ==========
-
-// 二维码类型
-type QrcodeType = 'wechat' | 'qq' | 'wechat_official' | 'telegram' | 'reward'
-
-// 上传群二维码（管理员）
-export const uploadQrcode = async (type: QrcodeType, file: File): Promise<ApiResponse & { data?: { image_url: string } }> => {
-  const formData = new FormData()
-  formData.append('image', file)
-  return post(`/api/v1/qrcode/${type}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-}
-
-// 获取群二维码路径
-export const getQrcodeUrl = async (type: QrcodeType): Promise<{ success: boolean; message?: string; data?: { image_url: string } }> => {
-  return get(`/api/v1/qrcode/${type}`)
-}

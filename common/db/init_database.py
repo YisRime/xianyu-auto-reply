@@ -220,17 +220,7 @@ class DatabaseInitializer:
         (
             "login.system_name",
             "闲鱼管理系统",
-            "登录页系统名称",
-        ),
-        (
-            "login.system_title",
-            "高效专业的\n闲鱼自动化管理平台",
-            "登录页系统标题",
-        ),
-        (
-            "login.system_description",
-            "自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题",
-            "登录页系统描述",
+            "系统名称（侧边栏标题）",
         ),
         (
             "theme.effect",

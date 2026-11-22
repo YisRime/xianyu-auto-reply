@@ -27,6 +27,7 @@ interface TabsStore {
 // 路由标题映射
 const routeTitles: Record<string, string> = {
   '/dashboard': '仪表盘',
+  '/data-analysis/overview': '数据总览',
   '/accounts': '账号管理',
   '/items': '商品管理',
   '/keywords': '自动回复',

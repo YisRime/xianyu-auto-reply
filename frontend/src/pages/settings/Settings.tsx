@@ -4,7 +4,6 @@
  * 功能模块按 Tab 展示，各卡片使用独立保存入口，避免跨模块覆盖未保存内容。
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Navigate } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
 import {
   getSystemSettings,
@@ -12,7 +11,6 @@ import {
   testEmailSend,
 } from '@/api/settings'
 import { PageLoading } from '@/components/common/Loading'
-import { useAuthStore } from '@/store/authStore'
 import { useRuntimeModeStore } from '@/store/runtimeModeStore'
 import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
@@ -37,13 +35,11 @@ import { ServiceRestartCard } from './ServiceRestartCard'
 import { SystemSettingsTabs } from './SystemSettingsTabs'
 import { TestEmailModal } from './TestEmailModal'
 import { UserNetworkSettingsTab } from './UserNetworkSettingsTab'
-import { useQrcodeSettings } from './useQrcodeSettings'
 import { useSettingsActions } from './useSettingsActions'
 import type { SettingsTab } from './settingsTypes'
 
 export function Settings() {
   const { addToast } = useUIStore()
-  const { isAuthenticated, token, _hasHydrated, user } = useAuthStore()
   const { setIsExeMode } = useRuntimeModeStore()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<SettingsTab>('basic')
@@ -52,14 +48,12 @@ export function Settings() {
   const [testEmail, setTestEmail] = useState('')
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
   const settingsRef = useRef<SystemSettings | null>(null)
-  const qrcodes = useQrcodeSettings()
 
   settingsRef.current = settings
   const getCurrentSettings = useCallback(() => settingsRef.current, [])
   const actions = useSettingsActions(getCurrentSettings)
 
   const loadSettings = useCallback(async () => {
-    if (!_hasHydrated || !isAuthenticated || !token || !user?.is_admin) return
     setLoading(true)
     try {
       const result = await getSystemSettings()
@@ -70,22 +64,16 @@ export function Settings() {
       applyThemeSettings(result.data)
       setSettings(result.data)
       setIsExeMode(Boolean(result.data['runtime.is_exe_mode']))
-      await qrcodes.loadQrcodes()
     } catch (error) {
       addToast({ type: 'error', message: getApiErrorMessage(error, '加载系统设置失败') })
     } finally {
       setLoading(false)
     }
-  }, [_hasHydrated, addToast, isAuthenticated, qrcodes.loadQrcodes, setIsExeMode, token, user?.is_admin])
+  }, [addToast, setIsExeMode])
 
   useEffect(() => {
-    if (!_hasHydrated || !isAuthenticated || !token) return
-    if (!user?.is_admin) {
-      setLoading(false)
-      return
-    }
     void loadSettings()
-  }, [_hasHydrated, isAuthenticated, loadSettings, token, user?.is_admin])
+  }, [loadSettings])
 
   const handleTestEmail = useCallback(async () => {
     const email = testEmail.trim()
@@ -122,7 +110,6 @@ export function Settings() {
     })
   }
 
-  if (!user?.is_admin) return <Navigate to="/dashboard" replace />
   if (loading) return <PageLoading />
 
   const themeAppearance = normalizeThemeAppearanceSettings(settings)
@@ -149,11 +136,8 @@ export function Settings() {
         settings={settings}
         setSettings={setSettings}
         smtpSaving={actions.saving('smtp')}
-        qrcodeUrls={qrcodes.urls}
-        qrcodeUploading={qrcodes.uploading}
         onSmtpSave={() => void actions.saveSmtp()}
         onOpenTestEmail={() => setShowTestEmailModal(true)}
-        onUploadQrcode={(type, file) => void qrcodes.upload(type, file)}
       />}
 
       {activeTab === 'appearance' && <AppearanceSettingsTab

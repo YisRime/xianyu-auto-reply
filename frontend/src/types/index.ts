@@ -16,28 +16,6 @@ export interface User {
   expire_at?: string | null
 }
 
-export interface LoginRequest {
-  username?: string
-  password?: string
-  email?: string
-  verification_code?: string
-  // 极验滑动验证码参数
-  geetest_challenge?: string
-  geetest_validate?: string
-  geetest_seccode?: string
-}
-
-export interface LoginResponse {
-  success: boolean
-  message?: string
-  token?: string
-  refresh_token?: string
-  user_id?: number
-  username?: string
-  is_admin?: boolean
-  account_limit?: number | null
-}
-
 // 账号相关类型
 export interface Account {
   pk?: number  // 数据库主键
@@ -234,8 +212,6 @@ export interface MessageNotification {
 // 系统设置相关类型
 export interface LoginBrandingSettings {
   'login.system_name': string
-  'login.system_title': string
-  'login.system_description': string
 }
 
 export type ThemeEffect = 'solid' | 'gradient'
@@ -270,8 +246,6 @@ export interface SystemSettings {
   'disclaimer.agree_button_text'?: string
   'disclaimer.disagree_button_text'?: string
   'login.system_name'?: string
-  'login.system_title'?: string
-  'login.system_description'?: string
   'auth.footer_ad_html'?: string
   'theme.effect'?: ThemeEffect
   'theme.color_preset'?: ThemeColorPreset
@@ -282,9 +256,6 @@ export interface SystemSettings {
   smtp_user?: string
   smtp_password?: string
   smtp_from?: string
-  'auth.email_allowed_suffixes'?: string
-  'auth.email_denied_suffixes'?: string
-  'auth.email_denied_message'?: string
   smtp_use_tls?: boolean
   smtp_use_ssl?: boolean
   // 模块设置

@@ -18,7 +18,6 @@ from common.services.system_setting_validation import (
     parse_log_retention_days,
     validate_business_setting,
 )
-from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS, normalize_policy_setting
 from common.utils.email_utils import normalize_email_address
 
 LOG_RETENTION_KEY = "log.retention_days"
@@ -57,11 +56,6 @@ def _normalize_email_setting(key: str, value: str) -> tuple[str, str | None]:
 def _normalize_setting_value(key: str, raw_value: str) -> tuple[str, str | None]:
     """规范化并校验单个设置值，不处理需要完整目标状态的跨字段约束。"""
     value = str(raw_value or "")
-    if key in EMAIL_DOMAIN_DEFAULTS:
-        try:
-            return normalize_policy_setting(key, value), None
-        except ValueError as exc:
-            return value, str(exc)
     if key in _TRIMMED_SETTING_KEYS:
         value = value.strip()
 

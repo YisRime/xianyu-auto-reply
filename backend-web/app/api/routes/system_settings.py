@@ -37,8 +37,6 @@ NON_ADMIN_ALLOWED_KEYS = {
     "disclaimer.agree_button_text",
     "disclaimer.disagree_button_text",
     "login.system_name",
-    "login.system_title",
-    "login.system_description",
     "theme.effect",
     "theme.color_preset",
     "theme.font_family",
@@ -118,8 +116,6 @@ async def get_public_settings(
     # 只返回公开的配置项
     public_keys = {
         "login.system_name",
-        "login.system_title",
-        "login.system_description",
         "theme.effect",
         "theme.color_preset",
         "theme.font_family",

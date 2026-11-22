@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
 from common.models.user_setting import UserSetting
-from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS
 from common.services.system_setting_validation import parse_boolean_setting
 from common.utils.text_utils import escape_xss
 
@@ -29,15 +28,9 @@ SENSITIVE_KEYS = {
     "security.jwt_secret_key",
 }
 
-DEFAULT_LOGIN_SYSTEM_TITLE = "高效专业的\n闲鱼自动化管理平台"
-DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理、数据分析，一站式解决闲鱼运营难题"
-
 
 DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
-    **EMAIL_DOMAIN_DEFAULTS,
-    "login.system_name": ("闲鱼管理系统", "登录页系统名称"),
-    "login.system_title": (DEFAULT_LOGIN_SYSTEM_TITLE, "登录页系统标题"),
-    "login.system_description": (DEFAULT_LOGIN_SYSTEM_DESCRIPTION, "登录页系统描述"),
+    "login.system_name": ("闲鱼管理系统", "系统名称（侧边栏标题）"),
     "theme.effect": ("solid", "系统主题效果（solid-纯色，gradient-炫彩）"),
     "theme.color_preset": ("ocean", "系统主题颜色预设"),
     "theme.font_family": ("system", "系统主题字体预设"),
@@ -72,10 +65,7 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
 
 # 不需要XSS转义的键（布尔值、数字等）
 NO_ESCAPE_KEYS = {
-    *EMAIL_DOMAIN_DEFAULTS,
     "login.system_name",
-    "login.system_title",
-    "login.system_description",
     "theme.effect",
     "theme.color_preset",
     "theme.font_family",

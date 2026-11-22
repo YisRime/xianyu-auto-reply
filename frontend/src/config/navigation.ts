@@ -12,7 +12,6 @@ import {
   Key,
   Layers,
   LayoutDashboard,
-  LineChart,
   LogIn,
   Mail,
   MapPin,
@@ -39,14 +38,12 @@ export interface NavItem {
   icon: React.ElementType
   label: string
   path: string
-  adminOnly?: boolean
 }
 
 export interface NavGroup {
   key: string
   icon: React.ElementType
   label: string
-  adminOnly?: boolean
   children: NavItem[]
 }
 
@@ -63,14 +60,7 @@ export function isNavGroup(entry: NavEntry): entry is NavGroup {
 
 export const mainNavItems: NavEntry[] = [
   { key: 'dashboard', icon: LayoutDashboard, label: '仪表盘', path: '/dashboard' },
-  {
-    key: 'data-analysis',
-    icon: BarChart3,
-    label: '数据分析',
-    children: [
-      { key: 'data-overview', icon: LineChart, label: '数据总览', path: '/data-analysis/overview' },
-    ],
-  },
+  { key: 'data-analysis', icon: BarChart3, label: '数据总览', path: '/data-analysis/overview' },
   { key: 'accounts', icon: Users, label: '账号管理', path: '/accounts' },
   { key: 'online-chat-new', icon: MessageSquare, label: '在线聊天', path: '/online-chat-new' },
   { key: 'items', icon: Package, label: '商品管理', path: '/items' },
@@ -113,29 +103,28 @@ export const mainNavItems: NavEntry[] = [
 ]
 
 export const adminNavItems: NavEntry[] = [
-  { key: 'settings', icon: Settings, label: '系统设置', path: '/settings', adminOnly: true },
+  { key: 'settings', icon: Settings, label: '系统设置', path: '/settings' },
   {
     key: 'admin-logs',
     icon: ScrollText,
     label: '日志管理',
-    adminOnly: true,
     children: [
-      { key: 'admin-system-logs', icon: FileText, label: '系统日志', path: '/admin/logs', adminOnly: true },
-      { key: 'admin-redelivery-batches', icon: Repeat, label: '补发货日志', path: '/admin/redelivery-batches', adminOnly: true },
-      { key: 'admin-account-login-logs', icon: LogIn, label: '账号登录日志', path: '/admin/account-login-logs', adminOnly: true },
-      { key: 'admin-rate-batches', icon: Star, label: '补评价日志', path: '/admin/rate-batches', adminOnly: true },
-      { key: 'admin-polish-batches', icon: Star, label: '擦亮日志', path: '/admin/polish-batches', adminOnly: true },
-      { key: 'admin-login-renew-batches', icon: Key, label: '登录续期日志', path: '/admin/login-renew-batches', adminOnly: true },
-      { key: 'admin-token-renewal-batches', icon: Key, label: 'Token续期日志', path: '/admin/token-renewal-batches', adminOnly: true },
-      { key: 'admin-cookies-refresh-batches', icon: Key, label: 'COOKIES刷新日志', path: '/admin/cookies-refresh-batches', adminOnly: true },
-      { key: 'admin-api-cookie-renew-batches', icon: Key, label: '接口续期Cookies日志', path: '/admin/api-cookie-renew-batches', adminOnly: true },
-      { key: 'admin-close-notice-batches', icon: BellOff, label: '消息通知关闭日志', path: '/admin/close-notice-batches', adminOnly: true },
-      { key: 'admin-red-flower-batches', icon: Flower2, label: '求小红花日志', path: '/admin/red-flower-batches', adminOnly: true },
-      { key: 'admin-db-backup-logs', icon: Database, label: '数据库备份日志', path: '/admin/db-backup-logs', adminOnly: true },
-      { key: 'admin-email-logs', icon: Mail, label: '邮件日志', path: '/admin/email-logs', adminOnly: true },
+      { key: 'admin-system-logs', icon: FileText, label: '系统日志', path: '/admin/logs' },
+      { key: 'admin-redelivery-batches', icon: Repeat, label: '补发货日志', path: '/admin/redelivery-batches' },
+      { key: 'admin-account-login-logs', icon: LogIn, label: '账号登录日志', path: '/admin/account-login-logs' },
+      { key: 'admin-rate-batches', icon: Star, label: '补评价日志', path: '/admin/rate-batches' },
+      { key: 'admin-polish-batches', icon: Star, label: '擦亮日志', path: '/admin/polish-batches' },
+      { key: 'admin-login-renew-batches', icon: Key, label: '登录续期日志', path: '/admin/login-renew-batches' },
+      { key: 'admin-token-renewal-batches', icon: Key, label: 'Token续期日志', path: '/admin/token-renewal-batches' },
+      { key: 'admin-cookies-refresh-batches', icon: Key, label: 'COOKIES刷新日志', path: '/admin/cookies-refresh-batches' },
+      { key: 'admin-api-cookie-renew-batches', icon: Key, label: '接口续期Cookies日志', path: '/admin/api-cookie-renew-batches' },
+      { key: 'admin-close-notice-batches', icon: BellOff, label: '消息通知关闭日志', path: '/admin/close-notice-batches' },
+      { key: 'admin-red-flower-batches', icon: Flower2, label: '求小红花日志', path: '/admin/red-flower-batches' },
+      { key: 'admin-db-backup-logs', icon: Database, label: '数据库备份日志', path: '/admin/db-backup-logs' },
+      { key: 'admin-email-logs', icon: Mail, label: '邮件日志', path: '/admin/email-logs' },
     ],
   },
-  { key: 'admin-scheduled-tasks', icon: Timer, label: '定时任务', path: '/admin/scheduled-tasks', adminOnly: true },
+  { key: 'admin-scheduled-tasks', icon: Timer, label: '定时任务', path: '/admin/scheduled-tasks' },
 ]
 
 function matchesPath(currentPath: string, targetPath: string): boolean {
@@ -188,10 +177,6 @@ export function getTopLevelMenuEntryByPath(path: string): NavEntry | NavItem | n
   }
 
   return null
-}
-
-export function findTopLevelMenuKeyByPath(path: string): string | null {
-  return getTopLevelMenuEntryByPath(path)?.key || null
 }
 
 /** 判断路径是否在当前运行模式下被禁止访问（EXE 模式下商品发布与共享扫码不可用）。 */

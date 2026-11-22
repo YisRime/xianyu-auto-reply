@@ -1,50 +1,35 @@
-/** 邮件与联系方式设置 Tab。 */
-import { useRef } from 'react'
-import { Copy, Heart, Mail, MessageCircle, Save, Upload, Users } from 'lucide-react'
+/** 邮件设置 Tab。 */
+import { Copy, Mail, Save } from 'lucide-react'
 import { ButtonLoading, Loading } from '@/components/common/Loading'
 import { PasswordInput } from '@/components/common/PasswordInput'
 import { copyToClipboard } from '@/utils/clipboard'
 import { useUIStore } from '@/store/uiStore'
 import type { SystemSettings } from '@/types'
-import type { QrcodeType, QrcodeUploading, QrcodeUrls, SetSystemSettings } from './settingsTypes'
+import type { SetSystemSettings } from './settingsTypes'
 
 interface ContactSettingsTabProps {
   settings: SystemSettings | null
   setSettings: SetSystemSettings
   smtpSaving: boolean
-  qrcodeUrls: QrcodeUrls
-  qrcodeUploading: QrcodeUploading
   onSmtpSave: () => void
   onOpenTestEmail: () => void
-  onUploadQrcode: (type: QrcodeType, file: File) => void
 }
-
-const QRCODE_ITEMS: Array<{ type: QrcodeType; label: string; icon: typeof MessageCircle; iconClass: string }> = [
-  { type: 'wechat', label: '微信群', icon: MessageCircle, iconClass: 'text-green-500' },
-  { type: 'qq', label: 'QQ群', icon: Users, iconClass: 'text-blue-500' },
-  { type: 'wechat_official', label: '公众号', icon: MessageCircle, iconClass: 'text-green-600' },
-  { type: 'telegram', label: 'Telegram', icon: MessageCircle, iconClass: 'text-blue-400' },
-  { type: 'reward', label: '赞赏码', icon: Heart, iconClass: 'text-red-500' },
-]
 
 export function ContactSettingsTab({
   settings,
   setSettings,
   smtpSaving,
-  qrcodeUrls,
-  qrcodeUploading,
   onSmtpSave,
   onOpenTestEmail,
-  onUploadQrcode,
 }: ContactSettingsTabProps) {
   const { addToast } = useUIStore()
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4">
       <div className="vben-card relative" aria-busy={smtpSaving}>
         {smtpSaving && <div role="status" className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 dark:bg-slate-900/80"><Loading text="正在保存发件人设置…" /></div>}
         <div className="vben-card-header"><h2 className="vben-card-title"><Mail className="h-4 w-4" />发件人设置</h2></div>
         <div className="vben-card-body space-y-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">配置SMTP服务器用于发送注册验证码等邮件通知</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">配置 SMTP 服务器用于发送邮件通知与测试邮件。</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="SMTP服务器">
               <input type="text" value={settings?.smtp_server || ''} onChange={(event) => setSettings((current) => current ? { ...current, smtp_server: event.target.value } : null)} placeholder="smtp.qq.com" className="input-ios" />
@@ -75,39 +60,11 @@ export function ContactSettingsTab({
             </Field>
           </div>
           <p className="text-xs text-slate-400">端口说明：25-无加密，465-SSL，587-TLS（推荐）</p>
-          <div className="space-y-4 border-t border-slate-100 pt-4 dark:border-slate-700">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              邮箱后缀限制用于注册和登录，禁止名单优先。按完整域名匹配，子域名需单独填写；两个名单均留空时不限制。
-            </p>
-            <div className="input-group">
-              <label htmlFor="email-denied-suffixes" className="input-label">禁止邮箱后缀</label>
-              <textarea id="email-denied-suffixes" rows={2} maxLength={4096} value={settings?.['auth.email_denied_suffixes'] ?? ''} onChange={(event) => setSettings((current) => current ? { ...current, 'auth.email_denied_suffixes': event.target.value } : null)} placeholder="例如 qq.com,@example.com，多个后缀用英文逗号分隔" className="input-ios" />
-            </div>
-            <div className="input-group">
-              <label htmlFor="email-allowed-suffixes" className="input-label">允许邮箱后缀</label>
-              <textarea id="email-allowed-suffixes" rows={2} maxLength={4096} value={settings?.['auth.email_allowed_suffixes'] ?? ''} onChange={(event) => setSettings((current) => current ? { ...current, 'auth.email_allowed_suffixes': event.target.value } : null)} placeholder="留空不限制；填写后仅允许名单内且未被禁止的邮箱" className="input-ios" />
-            </div>
-            <div className="input-group">
-              <label htmlFor="email-denied-message" className="input-label">禁止提示语</label>
-              <textarea id="email-denied-message" rows={2} maxLength={500} value={settings?.['auth.email_denied_message'] ?? ''} onChange={(event) => setSettings((current) => current ? { ...current, 'auth.email_denied_message': event.target.value } : null)} placeholder="该邮箱后缀不允许登录或注册，请更换邮箱" className="input-ios" />
-              <p className="text-xs text-slate-500 dark:text-slate-400">留空使用默认提示。保存后对后续请求立即生效，已获取的验证码也需符合新规则。</p>
-            </div>
-          </div>
           <button type="button" onClick={onOpenTestEmail} className="btn-ios-secondary">发送测试邮件</button>
           <div className="flex justify-end border-t border-slate-100 pt-4 dark:border-slate-700">
             <button type="button" onClick={onSmtpSave} disabled={smtpSaving} className="btn-ios-primary">
               {smtpSaving ? <ButtonLoading /> : <Save className="h-4 w-4" />}保存发件人设置
             </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="vben-card">
-        <div className="vben-card-header"><h2 className="vben-card-title"><MessageCircle className="h-4 w-4" />群二维码管理</h2></div>
-        <div className="vben-card-body">
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">上传的二维码将显示在“关于”页面</p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 2xl:grid-cols-5">
-            {QRCODE_ITEMS.map((item) => <QrcodeItem key={item.type} {...item} imageUrl={qrcodeUrls[item.type]} uploading={qrcodeUploading[item.type]} onUpload={(file) => onUploadQrcode(item.type, file)} />)}
           </div>
         </div>
       </div>
@@ -117,33 +74,4 @@ export function ContactSettingsTab({
 
 function Field({ label, className = '', children }: { label: string; className?: string; children: React.ReactNode }) {
   return <div className={`input-group ${className}`}><label className="input-label">{label}</label>{children}</div>
-}
-
-interface QrcodeItemProps {
-  label: string
-  icon: typeof MessageCircle
-  iconClass: string
-  imageUrl: string
-  uploading: boolean
-  onUpload: (file: File) => void
-}
-
-function QrcodeItem({ label, icon: Icon, iconClass, imageUrl, uploading, onUpload }: QrcodeItemProps) {
-  const fileRef = useRef<HTMLInputElement>(null)
-  return (
-    <div className="text-center">
-      <p className="mb-2 flex items-center justify-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-300"><Icon className={`h-4 w-4 ${iconClass}`} />{label}</p>
-      <div className="mx-auto mb-2 h-24 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-        {imageUrl ? <img src={imageUrl} alt={label} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">未上传</div>}
-      </div>
-      <input ref={fileRef} type="file" accept="image/*" onChange={(event) => {
-        const file = event.target.files?.[0]
-        if (file) onUpload(file)
-        event.target.value = ''
-      }} className="hidden" />
-      <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ios-secondary btn-sm">
-        {uploading ? <ButtonLoading /> : <Upload className="h-3 w-3" />}上传
-      </button>
-    </div>
-  )
 }

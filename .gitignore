@@ -278,3 +278,6 @@ AGENTS.md
 # 本地运行时（自建 MySQL / Garnet / Playwright 浏览器内核，不纳入版本管理）
 # ------------------------------------------
 runtime/
+
+# 保留 MariaDB 运行配置（不含二进制与数据）
+!runtime/my-mariadb.ini

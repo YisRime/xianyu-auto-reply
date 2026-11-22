@@ -23,7 +23,6 @@ const SYSTEM_SETTINGS_PREFIX = '/api/v1/system-settings'
 const PUBLIC_SYSTEM_SETTINGS_PREFIX = `${SYSTEM_SETTINGS_PREFIX}/public`
 const AI_SETTINGS_PREFIX = '/api/v1/ai-reply-settings'
 const ADMIN_PREFIX = '/api/v1/admin'
-const MENU_HIDDEN_SETTING_KEY = 'navigation.hidden_menu_keys'
 const DEFAULT_LOGIN_BRANDING_SETTINGS: LoginBrandingSettings = {
   'login.system_name': '闲鱼管理系统',
   'login.system_title': '高效专业的\n闲鱼自动化管理平台',
@@ -36,7 +35,7 @@ const LOGIN_BRANDING_SETTING_KEYS: Array<keyof LoginBrandingSettings> = [
   'login.system_description',
 ]
 
-const BOOLEAN_SYSTEM_SETTING_KEYS = ['registration_enabled', 'show_default_login_info', 'login_captcha_enabled', 'smtp_use_tls', 'smtp_use_ssl', 'runtime.is_exe_mode', 'account.face_verify_timeout_disable', 'proxy.enabled']
+const BOOLEAN_SYSTEM_SETTING_KEYS = ['smtp_use_tls', 'smtp_use_ssl', 'runtime.is_exe_mode', 'account.face_verify_timeout_disable', 'proxy.enabled']
 
 export const LOGIN_BRANDING_UPDATED_EVENT = 'login-branding-updated'
 
@@ -133,50 +132,6 @@ export const updateThemeFontSettings = async (settings?: Partial<SystemSettings>
     dispatchThemeSettingsUpdated(settings)
   }
   return response
-}
-
-export const parseHiddenMenuKeys = (value: unknown): string[] => {
-  if (!value) {
-    return []
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean)
-  }
-
-  if (typeof value !== 'string') {
-    return []
-  }
-
-  const trimmedValue = value.trim()
-  if (!trimmedValue) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(trimmedValue)
-    if (Array.isArray(parsed)) {
-      return parsed.map((item) => String(item).trim()).filter(Boolean)
-    }
-  } catch {
-    return trimmedValue.split(',').map((item) => item.trim()).filter(Boolean)
-  }
-
-  return []
-}
-
-export const serializeHiddenMenuKeys = (keys: string[]): string => {
-  return JSON.stringify(Array.from(new Set(keys.filter(Boolean))))
-}
-
-export const getHiddenMenuKeysFromSettings = (settings?: SystemSettings | null): string[] => {
-  return parseHiddenMenuKeys(settings?.[MENU_HIDDEN_SETTING_KEY])
-}
-
-export const buildHiddenMenuSettingsPayload = (keys: string[]): Partial<SystemSettings> => {
-  return {
-    [MENU_HIDDEN_SETTING_KEY]: serializeHiddenMenuKeys(keys),
-  }
 }
 
 // 获取 AI 设置

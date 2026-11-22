@@ -246,10 +246,6 @@ export function Dashboard() {
             ) : adminStats ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
                 <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">{adminStats.total_users}</p>
-                  <p className="text-sm text-slate-500">总用户数</p>
-                </div>
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">{adminStats.total_cookies}</p>
                   <p className="text-sm text-slate-500">总账号数</p>
                 </div>

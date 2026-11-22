@@ -1,10 +1,7 @@
 /** 基础与认证设置 Tab。 */
 import { Save, Settings as SettingsIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/common/Loading'
-import { getExeForcedHiddenMenuKeys } from '@/config/navigation'
-import { getHiddenMenuKeysFromSettings } from '@/api/settings'
 import type { SystemSettings } from '@/types'
-import { MenuVisibilitySettings } from './MenuVisibilitySettings'
 import { RedeliveryKeywordSetting } from './RedeliveryKeywordSetting'
 import { SliderModeSetting } from './SliderModeSetting'
 import type { SetSystemSettings } from './settingsTypes'
@@ -12,23 +9,15 @@ import type { SetSystemSettings } from './settingsTypes'
 interface BasicSettingsTabProps {
   settings: SystemSettings | null
   setSettings: SetSystemSettings
-  isExeMode: boolean
   basicSaving: boolean
-  hiddenMenuSaving: boolean
   onBasicSave: () => void
-  onHiddenMenusChange: (keys: string[]) => void
-  onHiddenMenusSave: () => void
 }
 
 export function BasicSettingsTab({
   settings,
   setSettings,
-  isExeMode,
   basicSaving,
-  hiddenMenuSaving,
   onBasicSave,
-  onHiddenMenusChange,
-  onHiddenMenusSave,
 }: BasicSettingsTabProps) {
   return (
     <div className="space-y-4">
@@ -38,24 +27,6 @@ export function BasicSettingsTab({
         </div>
         <div className="vben-card-body space-y-4">
           <div className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
-            <ToggleSetting
-              title="允许用户注册"
-              description="开启后允许新用户注册账号"
-              checked={Boolean(settings?.registration_enabled ?? false)}
-              onChange={(checked) => setSettings((current) => current ? { ...current, registration_enabled: checked } : null)}
-            />
-            <ToggleSetting
-              title="显示默认登录信息"
-              description="登录页面显示默认账号密码提示"
-              checked={Boolean(settings?.show_default_login_info ?? false)}
-              onChange={(checked) => setSettings((current) => current ? { ...current, show_default_login_info: checked } : null)}
-            />
-            <ToggleSetting
-              title="登录滑动验证码"
-              description="开启后账号密码登录需要完成滑动验证"
-              checked={Boolean(settings?.login_captcha_enabled ?? true)}
-              onChange={(checked) => setSettings((current) => current ? { ...current, login_captcha_enabled: checked } : null)}
-            />
             <div className="flex min-h-20 items-center justify-between gap-4 border-b border-slate-100 py-3 dark:border-slate-700">
               <div>
                 <p className="font-medium text-slate-900 dark:text-slate-100">日志保留天数</p>
@@ -84,7 +55,6 @@ export function BasicSettingsTab({
             />
           </div>
 
-
           <SliderModeSetting
             value={settings?.['captcha.slider_mode']}
             onSaved={(mode) => setSettings((current) => current ? { ...current, 'captcha.slider_mode': mode } : current)}
@@ -99,13 +69,6 @@ export function BasicSettingsTab({
       <RedeliveryKeywordSetting
         value={settings?.redelivery_trigger_keyword}
         onSaved={(keyword) => setSettings((current) => current ? { ...current, redelivery_trigger_keyword: keyword } : current)}
-      />
-      <MenuVisibilitySettings
-        hiddenMenuKeys={getHiddenMenuKeysFromSettings(settings)}
-        onChange={onHiddenMenusChange}
-        onSave={onHiddenMenusSave}
-        excludedMenuKeys={getExeForcedHiddenMenuKeys(isExeMode)}
-        saving={hiddenMenuSaving}
       />
     </div>
   )

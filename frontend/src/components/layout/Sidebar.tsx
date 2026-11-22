@@ -18,18 +18,15 @@ import {
   PanelLeft,
   ChevronDown,
 } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
 import {
   adminNavItems,
-  bottomNavItems,
-  getVisibleBottomNavItems,
-  getVisibleNavEntries,
+  getExeForcedHiddenMenuKeys,
   isNavGroup,
   mainNavItems,
   type NavGroup,
   type NavItem,
 } from '@/config/navigation'
-import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
+import { useRuntimeModeStore } from '@/store/runtimeModeStore'
 import { useUIStore } from '@/store/uiStore'
 import { useVersionStore } from '@/store/versionStore'
 import { cn } from '@/utils/cn'
@@ -39,25 +36,18 @@ interface SidebarProps {
 }
 
 export function Sidebar({ systemName = '闲鱼管理系统' }: SidebarProps) {
-  const { user } = useAuthStore()
-  const { hiddenMenuKeys, isExeMode } = useMenuVisibilityStore()
+  const { isExeMode } = useRuntimeModeStore()
   const { sidebarCollapsed, sidebarMobileOpen, setSidebarMobileOpen, setSidebarCollapsed } = useUIStore()
   const { currentVersion, fetchCurrentVersion } = useVersionStore()
   const location = useLocation()
   const navRef = useRef<HTMLElement>(null)
-  const isAdmin = Boolean(user?.is_admin)
+  const isAdmin = true
+  const forcedHiddenMenuKeys = useMemo(() => getExeForcedHiddenMenuKeys(isExeMode), [isExeMode])
   const visibleMainNavItems = useMemo(
-    () => getVisibleNavEntries(mainNavItems, hiddenMenuKeys, isAdmin, isExeMode),
-    [hiddenMenuKeys, isAdmin, isExeMode]
+    () => mainNavItems.filter((entry) => !forcedHiddenMenuKeys.includes(entry.key)),
+    [forcedHiddenMenuKeys]
   )
-  const visibleAdminNavItems = useMemo(
-    () => getVisibleNavEntries(adminNavItems, hiddenMenuKeys, isAdmin, isExeMode),
-    [hiddenMenuKeys, isAdmin, isExeMode]
-  )
-  const visibleBottomNavItems = useMemo(
-    () => getVisibleBottomNavItems(bottomNavItems, hiddenMenuKeys, isAdmin, isExeMode),
-    [hiddenMenuKeys, isAdmin, isExeMode]
-  )
+  const visibleAdminNavItems = adminNavItems
 
   // 展开的分组菜单 - 使用 Set 来避免重复添加触发重渲染
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
@@ -355,18 +345,6 @@ export function Sidebar({ systemName = '闲鱼管理系统' }: SidebarProps) {
               )}
             </>
           )}
-
-          {showLabel && (
-            <div className="pt-4 pb-2 px-3">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">其他</p>
-            </div>
-          )}
-          {!showLabel && (
-            <div className="pt-2 border-t border-slate-200 dark:border-slate-700 mt-2" />
-          )}
-          {visibleBottomNavItems.map((item) => (
-            <NavItemComponent key={item.path} item={item} />
-          ))}
         </nav>
 
         {/* Collapse toggle button */}

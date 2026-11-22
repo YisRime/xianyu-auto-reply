@@ -4,8 +4,7 @@ import { X, Home } from 'lucide-react'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { getMenuAccessFallbackPath, isPathBlockedForUser } from '@/config/navigation'
-import { useAuthStore } from '@/store/authStore'
-import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
+import { useRuntimeModeStore } from '@/store/runtimeModeStore'
 import { cn } from '@/utils/cn'
 
 interface Tab {
@@ -50,7 +49,6 @@ const routeTitles: Record<string, string> = {
   '/admin/logs': '系统日志',
   '/admin/auto-reply-logs': '消息日志',
   '/admin/account-login-logs': '账号登录日志',
-  '/admin/user-login-logs': '用户登录日志',
   '/admin/email-logs': '邮件日志',
   '/admin/risk-logs': '风控日志',
   '/admin/data': '数据管理',
@@ -65,7 +63,6 @@ const routeTitles: Record<string, string> = {
   '/admin/scheduled-tasks': '定时任务',
   '/admin/announcements': '公告管理',
   '/admin/ad-manage': '广告管理',
-  '/about': '关于',
   '/cards': '卡券管理',
   '/distribution/supply': '货源广场',
   '/distribution/card-pickup': '分销卡券',
@@ -178,8 +175,7 @@ interface ContextMenuState {
 export function TabsBar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user } = useAuthStore()
-  const { hiddenMenuKeys, isExeMode } = useMenuVisibilityStore()
+  const { isExeMode } = useRuntimeModeStore()
   const { tabs, activeTab, addTab, removeTab, removeTabsToRight, removeTabsToLeft, removeAllTabs, setActiveTab } = useTabsStore()
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -188,8 +184,7 @@ export function TabsBar() {
     targetPath: ''
   })
   const menuRef = useRef<HTMLDivElement>(null)
-  const isAdmin = Boolean(user?.is_admin)
-  const visibleTabs = tabs.filter((tab) => !hiddenAliasPaths.has(tab.path) && !isPathBlockedForUser(tab.path, hiddenMenuKeys, isAdmin, isExeMode))
+  const visibleTabs = tabs.filter((tab) => !hiddenAliasPaths.has(tab.path) && !isPathBlockedForUser(tab.path, isExeMode))
 
   // 监听路由变化，自动添加标签
   useEffect(() => {
@@ -206,7 +201,7 @@ export function TabsBar() {
   }, [location.pathname])
 
   useEffect(() => {
-    const blockedTabs = tabs.filter((tab) => tab.path !== '/dashboard' && (hiddenAliasPaths.has(tab.path) || isPathBlockedForUser(tab.path, hiddenMenuKeys, isAdmin, isExeMode)))
+    const blockedTabs = tabs.filter((tab) => tab.path !== '/dashboard' && (hiddenAliasPaths.has(tab.path) || isPathBlockedForUser(tab.path, isExeMode)))
     if (blockedTabs.length === 0) {
       return
     }
@@ -216,9 +211,9 @@ export function TabsBar() {
     }
 
     if (blockedTabs.some((tab) => tab.path === activeTab)) {
-      navigate(getMenuAccessFallbackPath(hiddenMenuKeys, isAdmin, isExeMode))
+      navigate(getMenuAccessFallbackPath(isExeMode))
     }
-  }, [tabs, hiddenMenuKeys, isAdmin, isExeMode, activeTab, navigate, removeTab])
+  }, [tabs, isExeMode, activeTab, navigate, removeTab])
 
   // 点击其他地方关闭右键菜单
   useEffect(() => {
@@ -246,7 +241,7 @@ export function TabsBar() {
       if (remainingVisibleTabs.length > 0) {
         navigate(remainingVisibleTabs[remainingVisibleTabs.length - 1].path)
       } else {
-        navigate(getMenuAccessFallbackPath(hiddenMenuKeys, isAdmin, isExeMode))
+        navigate(getMenuAccessFallbackPath(isExeMode))
       }
     }
   }
@@ -266,7 +261,7 @@ export function TabsBar() {
     if (targetPath !== '/dashboard') {
       removeTab(targetPath)
       if (activeTab === targetPath) {
-        navigate(getMenuAccessFallbackPath(hiddenMenuKeys, isAdmin, isExeMode))
+        navigate(getMenuAccessFallbackPath(isExeMode))
       }
     }
     setContextMenu(prev => ({ ...prev, visible: false }))
@@ -284,7 +279,7 @@ export function TabsBar() {
 
   const handleCloseAllTabs = () => {
     removeAllTabs()
-    navigate(getMenuAccessFallbackPath(hiddenMenuKeys, isAdmin, isExeMode))
+    navigate(getMenuAccessFallbackPath(isExeMode))
     setContextMenu(prev => ({ ...prev, visible: false }))
   }
 

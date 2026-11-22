@@ -5,8 +5,6 @@
  */
 import { useCallback, useState } from 'react'
 import {
-  buildHiddenMenuSettingsPayload,
-  getHiddenMenuKeysFromSettings,
   updateDistributionSettings,
   updateLoginBrandingSettings,
   updateProxySettings,
@@ -14,7 +12,6 @@ import {
   updateThemeAppearanceSettings,
   updateThemeFontSettings,
 } from '@/api/settings'
-import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
 import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { isValidEmail } from '@/utils/email'
@@ -30,7 +27,6 @@ type SettingsGetter = () => SystemSettings | null
 
 export function useSettingsActions(getSettings: SettingsGetter) {
   const { addToast } = useUIStore()
-  const { setHiddenMenuKeys } = useMenuVisibilityStore()
   const [savingKeys, setSavingKeys] = useState<Set<string>>(() => new Set())
 
   const persist = useCallback(async (payload: Partial<SystemSettings>, successMessage: string, failureMessage: string) => {
@@ -71,9 +67,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     }
     await run('basic', async () => {
       await persist({
-        registration_enabled: Boolean(settings.registration_enabled),
-        show_default_login_info: Boolean(settings.show_default_login_info),
-        login_captcha_enabled: Boolean(settings.login_captcha_enabled ?? true),
         'log.retention_days': String(value),
         'account.face_verify_timeout_disable': Boolean(settings['account.face_verify_timeout_disable'] ?? true),
       }, '基础设置保存成功', '基础设置保存失败')
@@ -175,15 +168,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     })
   }, [addToast, getSettings, run])
 
-  const saveHiddenMenus = useCallback(async () => {
-    const settings = getSettings()
-    if (!settings || savingKeys.has('menus')) return
-    const keys = getHiddenMenuKeysFromSettings(settings)
-    await run('menus', async () => {
-      if (await persist(buildHiddenMenuSettingsPayload(keys), '隐藏菜单设置保存成功', '隐藏菜单设置保存失败')) setHiddenMenuKeys(keys)
-    })
-  }, [getSettings, persist, run, savingKeys, setHiddenMenuKeys])
-
   const saveSpecial = useCallback(async (key: string, action: () => Promise<{ success: boolean; message?: string }>, successMessage: string, failureMessage: string) => {
     await run(key, async () => {
       try {
@@ -203,7 +187,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     saveWithdraw,
     saveDistribution,
     saveProxy,
-    saveHiddenMenus,
     saveLoginBranding: (settings: LoginBrandingSettings) => saveSpecial('branding', () => updateLoginBrandingSettings({ ...settings }), '登录品牌设置保存成功', '登录品牌设置保存失败'),
     saveThemeAppearance: (settings: ThemeAppearanceSettings) => saveSpecial('themeAppearance', () => updateThemeAppearanceSettings({ ...settings }), '主题外观保存成功', '主题外观保存失败'),
     saveThemeFont: (settings: ThemeFontSettings) => saveSpecial('themeFont', () => updateThemeFontSettings({ ...settings }), '主题字体保存成功', '主题字体保存失败'),

@@ -7,15 +7,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
 import {
-  buildHiddenMenuSettingsPayload,
-  getHiddenMenuKeysFromSettings,
   getSystemSettings,
   normalizeLoginBrandingSettings,
   testEmailSend,
 } from '@/api/settings'
 import { PageLoading } from '@/components/common/Loading'
 import { useAuthStore } from '@/store/authStore'
-import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
+import { useRuntimeModeStore } from '@/store/runtimeModeStore'
 import { useUIStore } from '@/store/uiStore'
 import { getApiErrorMessage } from '@/utils/apiError'
 import {
@@ -46,7 +44,7 @@ import type { SettingsTab } from './settingsTypes'
 export function Settings() {
   const { addToast } = useUIStore()
   const { isAuthenticated, token, _hasHydrated, user } = useAuthStore()
-  const { isExeMode, setHiddenMenuKeys, setIsExeMode } = useMenuVisibilityStore()
+  const { setIsExeMode } = useRuntimeModeStore()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<SettingsTab>('basic')
   const [settings, setSettings] = useState<SystemSettings | null>(null)
@@ -72,14 +70,13 @@ export function Settings() {
       applyThemeSettings(result.data)
       setSettings(result.data)
       setIsExeMode(Boolean(result.data['runtime.is_exe_mode']))
-      setHiddenMenuKeys(getHiddenMenuKeysFromSettings(result.data))
       await qrcodes.loadQrcodes()
     } catch (error) {
       addToast({ type: 'error', message: getApiErrorMessage(error, '加载系统设置失败') })
     } finally {
       setLoading(false)
     }
-  }, [_hasHydrated, addToast, isAuthenticated, qrcodes.loadQrcodes, setHiddenMenuKeys, setIsExeMode, token, user?.is_admin])
+  }, [_hasHydrated, addToast, isAuthenticated, qrcodes.loadQrcodes, setIsExeMode, token, user?.is_admin])
 
   useEffect(() => {
     if (!_hasHydrated || !isAuthenticated || !token) return
@@ -144,12 +141,8 @@ export function Settings() {
       {activeTab === 'basic' && <BasicSettingsTab
         settings={settings}
         setSettings={setSettings}
-        isExeMode={isExeMode}
         basicSaving={actions.saving('basic')}
-        hiddenMenuSaving={actions.saving('menus')}
         onBasicSave={() => void actions.saveBasic()}
-        onHiddenMenusChange={(keys) => setSettings((current) => current ? { ...current, ...buildHiddenMenuSettingsPayload(keys) } : null)}
-        onHiddenMenusSave={() => void actions.saveHiddenMenus()}
       />}
 
       {activeTab === 'contact' && <ContactSettingsTab

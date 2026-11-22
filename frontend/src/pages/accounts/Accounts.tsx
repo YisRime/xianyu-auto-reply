@@ -8,7 +8,7 @@ import { getAutoRateConfig, updateAutoRateConfig } from '@/api/autoRate'
 import { getApiErrorMessage } from '@/utils/request'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
-import { useMenuVisibilityStore } from '@/store/menuVisibilityStore'
+import { useRuntimeModeStore } from '@/store/runtimeModeStore'
 import { PageLoading } from '@/components/common/Loading'
 import { ConfirmModal } from '@/components/common/ConfirmModal'
 import { DeliveryBlockRulesModal } from './DeliveryBlockRulesModal'
@@ -82,7 +82,7 @@ const getAIConfigIncompleteMessage = (missingItems: string[]): string => (
 export function Accounts() {
   const { addToast } = useUIStore()
   const { isAuthenticated, token, user, _hasHydrated } = useAuthStore()
-  const { isExeMode } = useMenuVisibilityStore()
+  const { isExeMode } = useRuntimeModeStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [accounts, setAccounts] = useState<AccountWithKeywordCount[]>([])

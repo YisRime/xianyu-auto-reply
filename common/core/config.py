@@ -101,14 +101,6 @@ class BaseConfig(BaseSettings):
         default=10.0, alias="REDIS_STARTUP_RETRY_CAP_DELAY", gt=0
     )
     
-    # JWT配置（用于安全模块）
-    # 注意：jwt_secret_key 由数据库统一托管（backend-web 启动时自动生成并持久化），
-    # 此处 default 仅作占位，运行期会被数据库中的值覆盖；请勿依赖环境变量配置该值。
-    jwt_secret_key: str = Field(default="change-me", repr=False)
-    jwt_algorithm: str = Field(default="HS256")
-    access_token_expire_minutes: int = Field(default=30)
-    refresh_token_expire_minutes: int = Field(default=60 * 24 * 7)
-
     # 服务间调用 /internal 接口使用的共享令牌；留空时由启动流程从数据库自动加载或生成。
     internal_api_token: str = Field(default="", alias="INTERNAL_API_TOKEN", repr=False)
 

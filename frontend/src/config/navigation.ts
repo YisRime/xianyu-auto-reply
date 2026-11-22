@@ -9,7 +9,6 @@ import {
   Filter,
   Flower2,
   Image,
-  Info,
   Key,
   Layers,
   LayoutDashboard,
@@ -53,12 +52,7 @@ export interface NavGroup {
 
 export type NavEntry = NavItem | NavGroup
 
-export interface FirstLevelMenuOption {
-  key: string
-  label: string
-}
-
-export const HIDDEN_MENU_SETTING_KEY = 'navigation.hidden_menu_keys'
+/** EXE 模式下强制隐藏的一级菜单 */
 export const EXE_FORCED_HIDDEN_MENU_KEYS = ['product-publish'] as const
 
 const EXE_BLOCKED_PATH_PREFIXES = ['/accounts/shared-scan', '/shared-scan']
@@ -129,7 +123,6 @@ export const adminNavItems: NavEntry[] = [
       { key: 'admin-system-logs', icon: FileText, label: '系统日志', path: '/admin/logs', adminOnly: true },
       { key: 'admin-redelivery-batches', icon: Repeat, label: '补发货日志', path: '/admin/redelivery-batches', adminOnly: true },
       { key: 'admin-account-login-logs', icon: LogIn, label: '账号登录日志', path: '/admin/account-login-logs', adminOnly: true },
-      { key: 'admin-user-login-logs', icon: LogIn, label: '用户登录日志', path: '/admin/user-login-logs', adminOnly: true },
       { key: 'admin-rate-batches', icon: Star, label: '补评价日志', path: '/admin/rate-batches', adminOnly: true },
       { key: 'admin-polish-batches', icon: Star, label: '擦亮日志', path: '/admin/polish-batches', adminOnly: true },
       { key: 'admin-login-renew-batches', icon: Key, label: '登录续期日志', path: '/admin/login-renew-batches', adminOnly: true },
@@ -144,14 +137,6 @@ export const adminNavItems: NavEntry[] = [
   },
   { key: 'admin-scheduled-tasks', icon: Timer, label: '定时任务', path: '/admin/scheduled-tasks', adminOnly: true },
 ]
-
-export const bottomNavItems: NavItem[] = [
-  { key: 'about', icon: Info, label: '关于', path: '/about' },
-]
-
-const hideableFirstLevelMenuOptions: FirstLevelMenuOption[] = [...mainNavItems, ...bottomNavItems]
-  .filter((entry) => !('adminOnly' in entry && entry.adminOnly))
-  .map((entry) => ({ key: entry.key, label: entry.label }))
 
 function matchesPath(currentPath: string, targetPath: string): boolean {
   return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`)
@@ -168,37 +153,6 @@ function isExeBlockedPath(path: string, isExeMode: boolean): boolean {
   return EXE_BLOCKED_PATH_PREFIXES.some((targetPath) => matchesPath(path, targetPath))
 }
 
-export function getHideableFirstLevelMenuOptions(excludedMenuKeys: string[] = []): FirstLevelMenuOption[] {
-  if (excludedMenuKeys.length === 0) {
-    return hideableFirstLevelMenuOptions
-  }
-  return hideableFirstLevelMenuOptions.filter((option) => !excludedMenuKeys.includes(option.key))
-}
-
-export function getVisibleNavEntries(entries: NavEntry[], hiddenMenuKeys: string[], isAdmin: boolean, isExeMode: boolean = false): NavEntry[] {
-  const forcedHiddenMenuKeys = getExeForcedHiddenMenuKeys(isExeMode)
-  return entries.filter((entry) => {
-    if (forcedHiddenMenuKeys.includes(entry.key)) {
-      return false
-    }
-    if (entry.adminOnly && !isAdmin) {
-      return false
-    }
-    if (!isAdmin && hiddenMenuKeys.includes(entry.key)) {
-      return false
-    }
-    return true
-  })
-}
-
-export function getVisibleBottomNavItems(items: NavItem[], hiddenMenuKeys: string[], isAdmin: boolean, isExeMode: boolean = false): NavItem[] {
-  const forcedHiddenMenuKeys = getExeForcedHiddenMenuKeys(isExeMode)
-  if (isAdmin) {
-    return items.filter((item) => !forcedHiddenMenuKeys.includes(item.key))
-  }
-  return items.filter((item) => !hiddenMenuKeys.includes(item.key) && !forcedHiddenMenuKeys.includes(item.key))
-}
-
 const routeParentKeyMap: Record<string, string> = {
   '/accounts/shared-scan': 'accounts',
   '/shared-scan': 'accounts',
@@ -210,7 +164,7 @@ function getRouteParentEntry(path: string): NavEntry | NavItem | null {
     return null
   }
 
-  const allEntries: Array<NavEntry | NavItem> = [...mainNavItems, ...adminNavItems, ...bottomNavItems]
+  const allEntries: Array<NavEntry | NavItem> = [...mainNavItems, ...adminNavItems]
   return allEntries.find((entry) => entry.key === parentKey) || null
 }
 
@@ -233,12 +187,6 @@ export function getTopLevelMenuEntryByPath(path: string): NavEntry | NavItem | n
     }
   }
 
-  for (const item of bottomNavItems) {
-    if (matchesPath(path, item.path)) {
-      return item
-    }
-  }
-
   return null
 }
 
@@ -246,7 +194,8 @@ export function findTopLevelMenuKeyByPath(path: string): string | null {
   return getTopLevelMenuEntryByPath(path)?.key || null
 }
 
-export function isPathBlockedForUser(path: string, hiddenMenuKeys: string[], isAdmin: boolean, isExeMode: boolean = false): boolean {
+/** 判断路径是否在当前运行模式下被禁止访问（EXE 模式下商品发布与共享扫码不可用）。 */
+export function isPathBlockedForUser(path: string, isExeMode: boolean = false): boolean {
   if (isExeBlockedPath(path, isExeMode)) {
     return true
   }
@@ -256,36 +205,17 @@ export function isPathBlockedForUser(path: string, hiddenMenuKeys: string[], isA
     return false
   }
 
-  const forcedHiddenMenuKeys = getExeForcedHiddenMenuKeys(isExeMode)
-  if (forcedHiddenMenuKeys.includes(topLevelEntry.key)) {
-    return true
-  }
-
-  if (topLevelEntry.adminOnly && !isAdmin) {
-    return true
-  }
-
-  if (isAdmin) {
-    return false
-  }
-
-  return hiddenMenuKeys.includes(topLevelEntry.key)
+  return getExeForcedHiddenMenuKeys(isExeMode).includes(topLevelEntry.key)
 }
 
-export function getMenuAccessFallbackPath(hiddenMenuKeys: string[], isAdmin: boolean, isExeMode: boolean = false): string {
-  if (isAdmin) {
-    return '/dashboard'
-  }
-
+export function getMenuAccessFallbackPath(isExeMode: boolean = false): string {
   const forcedHiddenMenuKeys = getExeForcedHiddenMenuKeys(isExeMode)
-  const visibleMain = mainNavItems.find((entry) => !hiddenMenuKeys.includes(entry.key) && !forcedHiddenMenuKeys.includes(entry.key) && !('adminOnly' in entry && entry.adminOnly))
+  const visibleMain = mainNavItems.find((entry) => !forcedHiddenMenuKeys.includes(entry.key))
   if (visibleMain) {
     if (isNavGroup(visibleMain)) {
       return visibleMain.children[0]?.path || '/dashboard'
     }
     return visibleMain.path
   }
-
-  const visibleBottom = bottomNavItems.find((item) => !hiddenMenuKeys.includes(item.key) && !forcedHiddenMenuKeys.includes(item.key))
-  return visibleBottom?.path || '/dashboard'
+  return '/dashboard'
 }

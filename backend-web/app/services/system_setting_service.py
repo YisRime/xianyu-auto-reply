@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
 from common.models.user_setting import UserSetting
-from common.services.registration_policy import REGISTRATION_ENABLED_KEY
 from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS
 from common.services.system_setting_validation import parse_boolean_setting
 from common.utils.text_utils import escape_xss
@@ -26,7 +25,6 @@ from common.utils.text_utils import escape_xss
 SENSITIVE_KEYS = {
     "admin_password_hash",
     "security.internal_api_token",
-    "security.jwt_secret_key",
 }
 
 DEFAULT_LOGIN_SYSTEM_TITLE = "高效专业的\n闲鱼自动化管理平台"
@@ -35,7 +33,6 @@ DEFAULT_LOGIN_SYSTEM_DESCRIPTION = "自动回复、智能客服、订单管理�
 
 DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     **EMAIL_DOMAIN_DEFAULTS,
-    REGISTRATION_ENABLED_KEY: ("false", "是否允许新用户自助注册（关闭后拒绝注册及注册验证码发送、验证）"),
     "login.system_name": ("闲鱼管理系统", "登录页系统名称"),
     "login.system_title": (DEFAULT_LOGIN_SYSTEM_TITLE, "登录页系统标题"),
     "login.system_description": (DEFAULT_LOGIN_SYSTEM_DESCRIPTION, "登录页系统描述"),
@@ -74,16 +71,12 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
 # 不需要XSS转义的键（布尔值、数字等）
 NO_ESCAPE_KEYS = {
     *EMAIL_DOMAIN_DEFAULTS,
-    REGISTRATION_ENABLED_KEY,
-    "show_default_login_info",
-    "login_captcha_enabled",
     "login.system_name",
     "login.system_title",
     "login.system_description",
     "theme.effect",
     "theme.color_preset",
     "theme.font_family",
-    "navigation.hidden_menu_keys",
     "smtp_port",
     "smtp_use_tls",
     "smtp_use_ssl",
@@ -243,15 +236,11 @@ class SystemSettingService:
         settings: dict[str, str] = {}
         for entry in result.scalars().all():
             # JWT 密钥和服务间令牌即使内部调用 include_sensitive=True 也不返回。
-            if entry.key in {"security.internal_api_token", "security.jwt_secret_key"}:
+            if entry.key == "security.internal_api_token":
                 continue
             if not include_sensitive and entry.key in SENSITIVE_KEYS:
                 continue
             settings[entry.key] = entry.value
-        # 只规范化本次返回值，保留历史设置记录；各客户端统一读取 true/false。
-        settings[REGISTRATION_ENABLED_KEY] = (
-            "true" if parse_boolean_setting(settings.get(REGISTRATION_ENABLED_KEY)) else "false"
-        )
         password_login_mode = str(settings.get("password_login.mode") or "").strip().lower()
         settings["password_login.mode"] = (
             password_login_mode

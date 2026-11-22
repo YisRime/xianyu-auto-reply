@@ -31,10 +31,8 @@ from common.models.xy_keyword_rule import XYKeywordRule
 from common.models.xy_order import XYOrder
 from common.models.agent_order import AgentOrder
 from common.schemas.common import ApiResponse
-from common.schemas.user import AdminUserCreate, AdminUserUpdate
 from app.services.dashboard_stats_service import DashboardStatsService
 from app.services.scheduled_batch_log_service import ScheduledBatchLogService
-from app.services.user_service import UserService
 
 from common.utils.time_utils import get_beijing_now_naive, safe_isoformat
 router = APIRouter(tags=["admin"])

@@ -16,16 +16,13 @@ import asyncio
 import json
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
-from jose import JWTError
 from loguru import logger
 from sqlalchemy import select
 
-from app.core.security import decode_token
 from app.services.chat_new import ImSessionManager, get_im_session_manager
 from common.db.session import async_session_maker
-from common.models import User, UserRole, UserStatus
+from common.models import User, UserRole
 from common.models.xy_account import XYAccount
-from common.schemas.auth import TokenPayload
 
 router = APIRouter(prefix="/chat-new")
 
@@ -36,28 +33,13 @@ WS_CLOSE_IM_OFFLINE = 4404  # IM 客户端未连接，前端应稍后重试订�
 
 
 async def _authenticate_ws_user(token: str | None) -> User | None:
-    """
-    校验 WebSocket 连接携带的 token，返回对应的活跃用户。
-
-    校验失败（token 缺失/无效、用户不存在或非活跃）时返回 None。
-    """
-    if not token:
-        return None
-    try:
-        payload = TokenPayload(**decode_token(token))
-        if payload.sub is None:
-            return None
-        user_id = int(payload.sub)
-    except (JWTError, ValueError, TypeError):
-        return None
-
+    """返回内置管理员账号（单用户部署，不再校验令牌）。"""
+    del token  # 保留参数签名以兼容既有前端连接方式
     async with async_session_maker() as session:
-        result = await session.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-
-    if not user or user.status != UserStatus.ACTIVE:
-        return None
-    return user
+        result = await session.execute(
+            select(User).where(User.role == UserRole.ADMIN).order_by(User.id).limit(1)
+        )
+        return result.scalar_one_or_none()
 
 
 async def _user_can_access_account(user: User, account_id: str) -> bool:

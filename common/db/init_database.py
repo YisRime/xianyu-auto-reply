@@ -297,11 +297,6 @@ class DatabaseInitializer:
             "0",
             "远程过滑块调用冷却截止时间戳",
         ),
-        (
-            "show_default_login_info",
-            "true",
-            "登录页是否展示默认账号密码提示",
-        ),
         ("payment.channel", "alipay", "当前启用的支付渠道"),
         ("alipay.app_id", "", "支付宝应用ID"),
         ("alipay.private_key", "", "支付宝应用私钥"),
@@ -833,24 +828,6 @@ class DatabaseInitializer:
                 INDEX idx_all_identifier_status_created (account_identifier, login_status, created_at),
                 INDEX idx_all_owner_created (owner_id, created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='账号登录日志表';
-        """,
-
-        # 14.2 用户登录日志表（记录系统用户登录本系统的每一次尝试与结果，成功/失败都写入）
-        "xy_user_login_logs": """
-            CREATE TABLE IF NOT EXISTS xy_user_login_logs (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志ID',
-                owner_id BIGINT DEFAULT NULL COMMENT '登录用户ID（登录失败时为空）',
-                login_account VARCHAR(255) DEFAULT NULL COMMENT '登录账号（用户名或邮箱）',
-                login_method VARCHAR(32) NOT NULL COMMENT '登录方式：username_password/email_password/email_code',
-                success TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否登录成功：1-成功，0-失败',
-                client_ip VARCHAR(64) DEFAULT NULL COMMENT '客户端IP',
-                result_message VARCHAR(512) DEFAULT NULL COMMENT '结果说明（成功提示或失败原因）',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                INDEX idx_ull_owner_id (owner_id),
-                INDEX idx_ull_login_method (login_method),
-                INDEX idx_ull_created_at (created_at),
-                INDEX idx_ull_owner_created (owner_id, created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户登录日志表';
         """,
 
         # 14.3 邮件发送日志表（记录所有邮件触发尝试，成功/失败/限流/配置缺失都写入）

@@ -40,14 +40,6 @@ class BackendWebConfig(BaseConfig):
     api_v1_prefix: str = Field(default="/api/v1")
     service_port: int = Field(default=8089, alias="BACKEND_WEB_PORT")
 
-    # JWT配置
-    # 注意：jwt_secret_key 由数据库统一托管（启动时 ensure_jwt_secret_key 自动生成/加载并写回此实例），
-    # 此处 default 仅作占位，运行期会被数据库中的值覆盖。
-    jwt_secret_key: str = Field(default="change-me", repr=False)
-    jwt_algorithm: str = Field(default="HS256")
-    access_token_expire_minutes: int = Field(default=1440)
-    refresh_token_expire_minutes: int = Field(default=60 * 24 * 7)
-    
     # CORS配置
     cors_origins_raw: str = Field(default="*", alias="CORS_ORIGINS")
     

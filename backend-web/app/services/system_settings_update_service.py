@@ -18,7 +18,6 @@ from common.services.system_setting_validation import (
     parse_log_retention_days,
     validate_business_setting,
 )
-from common.services.registration_policy import REGISTRATION_ENABLED_KEY
 from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS, normalize_policy_setting
 from common.utils.email_utils import normalize_email_address
 
@@ -63,8 +62,6 @@ def _normalize_setting_value(key: str, raw_value: str) -> tuple[str, str | None]
             return normalize_policy_setting(key, value), None
         except ValueError as exc:
             return value, str(exc)
-    if key == REGISTRATION_ENABLED_KEY:
-        value = "true" if parse_boolean_setting(raw_value) else "false"
     if key in _TRIMMED_SETTING_KEYS:
         value = value.strip()
 

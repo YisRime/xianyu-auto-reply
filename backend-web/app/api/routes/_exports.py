@@ -15,7 +15,6 @@ from . import (
     ai,
     ai_listing,
     auto_reply_logs,
-    auth,
     auto_rate,
     blacklist,
     captcha,
@@ -73,8 +72,6 @@ from . import (
     token_renewal_logs,
     upload,
     user_settings,
-    user_login_logs,
-    users,
     version,
 )
 
@@ -92,11 +89,7 @@ api_router.include_router(public_status.router, tags=["公开状态"])
 # 激活码（公开接口，无需登录）
 api_router.include_router(activation.router, prefix="/activation", tags=["激活码"])
 
-# 认证相关
-api_router.include_router(auth.router, prefix="/auth", tags=["认证"])
-
-# 用户管理
-api_router.include_router(users.router, prefix="/users", tags=["用户管理"])
+# 用户设置（内部功能使用，无页面入口）
 api_router.include_router(user_settings.router, prefix="/user-settings", tags=["用户设置"])
 
 # 账号管理
@@ -142,7 +135,6 @@ api_router.include_router(system_settings.router, prefix="/system-settings", tag
 api_router.include_router(system_control.router, tags=["系统管理"])  # 已定义prefix="/system-control"
 api_router.include_router(auto_reply_logs.router, tags=["消息日志"])
 api_router.include_router(account_login_logs.router, tags=["账号登录日志"])
-api_router.include_router(user_login_logs.router, tags=["用户登录日志"])
 api_router.include_router(email_logs.router, tags=["邮件日志"])
 api_router.include_router(db_backup_logs.router, tags=["数据库备份日志"])
 api_router.include_router(risk_control_logs.router, tags=["风控日志"])

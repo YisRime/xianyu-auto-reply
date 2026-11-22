@@ -4,27 +4,18 @@ FastAPI依赖注入模块
 功能：
 1. 提供数据库会话依赖
 2. 提供各种服务类的依赖注入
-3. 提供用户认证依赖（当前用户、活跃用户、管理员用户）
-4. JWT令牌验证
+3. 单用户本地部署：不再校验登录令牌，所有接口固定使用内置管理员身份
 """
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.core.security import decode_token
 from common.db.session import async_session_maker
-from common.models import User, UserRole, UserStatus
-from common.schemas.auth import TokenPayload
-
-settings = get_settings()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/token")
+from common.models import User, UserRole
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
@@ -33,54 +24,35 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_db_session),
-) -> User:
-    """获取当前用户"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = TokenPayload(**decode_token(token))
-    except (JWTError, ValueError):
-        raise credentials_exception
-    if payload.sub is None:
-        raise credentials_exception
+async def get_current_user(session: AsyncSession = Depends(get_db_session)) -> User:
+    """返回内置管理员账号。
 
-    # 查询用户
-    from sqlalchemy import select
-    result = await session.execute(select(User).where(User.id == int(payload.sub)))
+    单用户本地部署已移除登录取证流程，不再解析任何令牌；
+    保留函数名与依赖签名，避免改动全部业务路由。
+    """
+    result = await session.execute(
+        select(User).where(User.role == UserRole.ADMIN).order_by(User.id).limit(1)
+    )
     user = result.scalar_one_or_none()
-    
-    if not user:
-        raise credentials_exception
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="内置管理员账号不存在",
+        )
     return user
 
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    """获取当前活跃用户"""
-    if current_user.status != UserStatus.ACTIVE:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+    """获取当前用户（单用户部署，恒为内置管理员）"""
     return current_user
 
 
 async def get_current_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
-    """获取当前管理员用户"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+    """获取当前管理员用户（单用户部署，恒为内置管理员）"""
     return current_user
 
 
 # ==================== Service 依赖注入 ====================
-
-async def get_user_service(session: AsyncSession = Depends(get_db_session)):
-    """获取用户服务"""
-    from app.services.user_service import UserService
-    return UserService(session)
-
 
 async def get_account_service(session: AsyncSession = Depends(get_db_session)):
     """获取账号服务"""
@@ -143,11 +115,6 @@ async def get_account_login_log_service(session: AsyncSession = Depends(get_db_s
     return AccountLoginLogService(session)
 
 
-async def get_user_login_log_service(session: AsyncSession = Depends(get_db_session)):
-    """获取用户登录日志服务"""
-    from app.services.user_login_log_service import UserLoginLogService
-    return UserLoginLogService(session)
-
 async def get_email_log_service(session: AsyncSession = Depends(get_db_session)):
     """获取邮件日志服务"""
     from app.services.email_log_service import EmailLogService
@@ -170,12 +137,6 @@ async def get_ai_conversation_service(session: AsyncSession = Depends(get_db_ses
     """获取AI对话服务"""
     from app.services.ai_conversation_service import AIConversationService
     return AIConversationService(session)
-
-
-async def get_auth_service(session: AsyncSession = Depends(get_db_session)):
-    """获取认证服务"""
-    from app.services.auth import AuthService
-    return AuthService(session)
 
 
 async def get_message_notification_service(session: AsyncSession = Depends(get_db_session)):

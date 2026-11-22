@@ -112,13 +112,6 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception("恢复数据库备份删除中断时遗留的暂存文件失败")
     
-    # 自检 JWT 密钥：弱/默认值时自动生成强随机密钥并持久化（源码启动兜底）
-    try:
-        from app.services.jwt_secret_service import ensure_jwt_secret_key
-        await ensure_jwt_secret_key(settings)
-    except Exception as e:
-        logger.error(f"JWT 密钥自检失败: {e}")
-
     # 初始化服务间 API 令牌，多个服务通过数据库共享同一令牌。
     try:
         from common.utils.internal_token_service import ensure_internal_api_token

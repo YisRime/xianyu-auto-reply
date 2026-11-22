@@ -12,7 +12,7 @@ echo    闲鱼自动回复系统 - 一键启动（后台运行）
 echo ============================================
 echo.
 echo [1/4] 启动 MariaDB ...
-powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\runtime\mariadb\bin\mariadbd.exe' -ArgumentList '--defaults-file=%ROOT%\runtime\my-mariadb.ini','--console' -WorkingDirectory '%ROOT%\runtime\mariadb\bin' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\mariadb-console.log' -RedirectStandardError '%ROOT%\logs\mariadb-console.err.log'"
+powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\runtime\mariadb\bin\mariadbd.exe' -ArgumentList '--defaults-file=%ROOT%\my-mariadb.ini','--console' -WorkingDirectory '%ROOT%\runtime\mariadb\bin' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\mariadb-console.log' -RedirectStandardError '%ROOT%\logs\mariadb-console.err.log'"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 3306 -TimeoutSec 120 >nul
 echo [2/4] 启动 Backend-Web (含前端页面) ...
 powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\backend-web' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\backend-web.out.log' -RedirectStandardError '%ROOT%\logs\backend-web.err.log'"

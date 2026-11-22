@@ -1,4 +1,4 @@
-name: Build Docker Images
+name: Build Docker Image
 
 on:
   push:
@@ -9,13 +9,14 @@ on:
       - 'scheduler/**'
       - 'common/**'
       - 'frontend/**'
+      - 'docker/**'
       - 'docker-compose.yml'
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/yisrime/xianyu-auto-reply
+  IMAGE_NAME: ghcr.io/yisrime/xianyu-auto-reply
 
 jobs:
   build:
@@ -23,14 +24,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: backend-web
-            dockerfile: backend-web/Dockerfile
-          - name: websocket
-            dockerfile: websocket/Dockerfile
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,7 +42,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.name }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha,format=short
@@ -58,9 +51,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: docker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          cache-from: type=gha,scope=xianyu-allinone
+          cache-to: type=gha,mode=max,scope=xianyu-allinone

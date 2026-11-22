@@ -1,10 +1,9 @@
-# Backend-Web 服务 Dockerfile
-# 单进程同时提供：HTTP API + 前端静态页面 + 定时任务调度（scheduler 已并入）
+# 闲鱼自动回复系统 - 单容器全栈镜像
 #
-# 说明：
-#   1. 第一阶段用 node 构建 frontend/dist，产物交给后端托管，镜像内不再需要 nginx；
-#   2. 依赖取 backend-web 与 scheduler 两份 pyproject 的并集（后者提��� apscheduler）；
-#   3. 不再 COPY launcher（该模块已删除）。
+# 一个容器内运行：
+#   - backend-web : HTTP API + 前端静态页面 + 定时任务调度
+#   - websocket   : 各账号上游 IM 长连接、自动回复、自动发货
+# 两者共用同一个 SQLite 数据文件，进程由 supervisord 托管。
 
 FROM node:18-alpine AS frontend-builder
 RUN npm config set registry https://registry.npmmirror.com
@@ -17,6 +16,7 @@ RUN npm run build
 FROM python:3.12-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PATCHRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
@@ -28,8 +28,9 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
 
+# libatomic1：playwright/patchright 内置 node 需要；Debian 13 不再自动带入
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates \
+        curl ca-certificates supervisor \
         libatomic1 \
         fonts-dejavu-core fonts-liberation \
     && update-ca-certificates \
@@ -37,14 +38,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY common /app/common
 COPY backend-web /app/backend-web
-# backend-web 运行时会 import scheduler/sched 包（定时任务已并入）
+COPY websocket /app/websocket
 COPY scheduler /app/scheduler
 COPY --from=frontend-builder /build/dist /app/frontend/dist
+COPY docker/supervisord.conf /etc/supervisor/conf.d/xianyu.conf
 
+# 依赖取 backend-web / websocket / scheduler 三份 pyproject 的并集
 RUN python - <<'PY'
 import io, tomllib
 deps = []
-for proj in ("/app/backend-web/pyproject.toml", "/app/scheduler/pyproject.toml"):
+for proj in (
+    "/app/backend-web/pyproject.toml",
+    "/app/websocket/pyproject.toml",
+    "/app/scheduler/pyproject.toml",
+):
     with open(proj, "rb") as fh:
         deps.extend(tomllib.load(fh).get("project", {}).get("dependencies", []))
 seen, uniq = set(), []
@@ -67,8 +74,9 @@ RUN python -m playwright install --with-deps chromium \
     && python -m patchright install chromium \
     && rm -rf /var/lib/apt/lists/* /root/.cache/ms-playwright/.links
 
-RUN mkdir -p /app/backend-web/logs /app/backend-web/static/uploads /app/data
+RUN mkdir -p /app/data /app/backend-web/logs /app/backend-web/static/uploads \
+             /app/websocket/logs /app/browser_data
 
-EXPOSE 8089
+EXPOSE 8089 8090
 
-CMD ["python", "backend-web/main.py"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]

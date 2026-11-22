@@ -70,9 +70,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && apt-get purge -y --auto-remove gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 
-RUN python -m playwright install --with-deps chromium \
-    && python -m patchright install chromium \
-    && rm -rf /var/lib/apt/lists/* /root/.cache/ms-playwright/.links
+RUN python -m playwright install --with-deps --no-shell chromium \
+    && python -m patchright install --no-shell chromium \
+    && rm -rf /var/lib/apt/lists/* /root/.cache/ms-playwright/.links /tmp/requirements.txt
 
 RUN mkdir -p /app/data /app/backend-web/logs /app/backend-web/static/uploads \
              /app/websocket/logs /app/browser_data

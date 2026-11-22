@@ -1,5 +1,5 @@
-/** 用户与网络设置 Tab。 */
-import { CalendarClock, Globe, Save } from 'lucide-react'
+/** 网络与代理设置 Tab。 */
+import { Globe, Save } from 'lucide-react'
 import { ButtonLoading } from '@/components/common/Loading'
 import type { SystemSettings } from '@/types'
 import type { SetSystemSettings } from './settingsTypes'
@@ -7,9 +7,7 @@ import type { SetSystemSettings } from './settingsTypes'
 interface UserNetworkSettingsTabProps {
   settings: SystemSettings | null
   setSettings: SetSystemSettings
-  userExpirySaving: boolean
   proxySaving: boolean
-  onUserExpirySave: () => void
   onProxySave: () => void
 }
 
@@ -17,32 +15,6 @@ export function UserNetworkSettingsTab(props: UserNetworkSettingsTabProps) {
   const { settings, setSettings } = props
   return (
     <div className="grid grid-cols-1 gap-4">
-      <div className="vben-card">
-        <div className="vben-card-header"><h2 className="vben-card-title"><CalendarClock className="h-4 w-4" />用户到期设置</h2></div>
-        <div className="vben-card-body space-y-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">配置用户续期单价与注册默认有效天数。注册默认天数留空时，新注册用户不设置到期日（永不过期）。</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="input-group">
-              <label className="input-label">续期一个月的价格（元）</label>
-              <input type="text" value={String(settings?.['user.renew_month_price'] || '')} onChange={(event) => {
-                const value = event.target.value
-                if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) setSettings((current) => current ? { ...current, 'user.renew_month_price': value } : null)
-              }} placeholder="请输入续期一个月的价格，例如：30.00" className="input-ios" />
-              <p className="mt-1 text-xs text-slate-400">用户在个人设置中续期时，按「单价 × 续期月数」计算总价并扣减余额。留空则续期功能不可用。</p>
-            </div>
-            <div className="input-group">
-              <label className="input-label">注册用户默认天数（天）</label>
-              <input type="text" value={String(settings?.['user.register_default_days'] || '')} onChange={(event) => {
-                const value = event.target.value
-                if (value === '' || /^\d*$/.test(value)) setSettings((current) => current ? { ...current, 'user.register_default_days': value } : null)
-              }} placeholder="留空表示注册不设置到期日" className="input-ios" />
-              <p className="mt-1 text-xs text-slate-400">新用户注册时，到期日 = 注册时间 + 默认天数。留空则新用户永不过期。</p>
-            </div>
-          </div>
-          <SaveButton saving={props.userExpirySaving} onClick={props.onUserExpirySave} label="保存到期设置" />
-        </div>
-      </div>
-
       <div className="vben-card">
         <div className="vben-card-header"><h2 className="vben-card-title"><Globe className="h-4 w-4" />代理设置</h2></div>
         <div className="vben-card-body space-y-4">

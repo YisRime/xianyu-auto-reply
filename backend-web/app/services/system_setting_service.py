@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.models.system_setting import SystemSetting
+from common.models.user_setting import UserSetting
 from common.services.registration_policy import REGISTRATION_ENABLED_KEY
 from common.services.email_domain_policy import EMAIL_DOMAIN_DEFAULTS
 from common.services.system_setting_validation import parse_boolean_setting
@@ -42,6 +43,8 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, tuple[str, str | None]] = {
     "theme.color_preset": ("ocean", "系统主题颜色预设"),
     "theme.font_family": ("system", "系统主题字体预设"),
     "log.retention_days": ("7", "日志保留天数（所有模块生效，修改后实时刷新各服务日志策略）"),
+    # 重发货触发关键字：原个人设置项，用户系统移除后改为全局系统设置
+    "redelivery_trigger_keyword": ("", "重发货触发关键字（闲鱼聊天中发送「关键字+订单号」触发重新发货，留空关闭）"),
     "account.face_verify_timeout_disable": ("true", "人脸验证超时是否自动禁用账号"),
     # 代理设置：用于配置网络请求的代理 API URL 和启用开关
     # api_url 默认空字符串表示未配置；enabled 默认 false 表示不启用
@@ -100,6 +103,7 @@ NO_ESCAPE_KEYS = {
     "withdraw.notify_email",
     "withdraw.min_amount",
     "log.retention_days",
+    "redelivery_trigger_keyword",
     "account.face_verify_timeout_disable",
     # 用户到期/续期设置：均为数字字符串，无需 XSS 转义
     "user.renew_month_price",
@@ -193,6 +197,44 @@ class SystemSettingService:
                 type(exc).__name__, exc,
             )
             raise
+
+    async def migrate_legacy_redelivery_keyword(self) -> None:
+        """将旧版按用户保存的重发货触发关键字迁移到全局系统设置。
+
+        用户系统移除后，该配置由「个人设置」改为「系统设置」。仅当系统设置
+        为空时从任意用户的旧记录中回填一次，保证升级后配置不丢失。
+        """
+        key = "redelivery_trigger_keyword"
+        try:
+            setting_stmt = select(SystemSetting).where(SystemSetting.key == key)
+            setting = (await self.session.execute(setting_stmt)).scalars().first()
+            if setting is not None and str(setting.value or "").strip():
+                return
+
+            legacy_stmt = (
+                select(UserSetting.value)
+                .where(UserSetting.key == key, UserSetting.value != "")
+                .limit(1)
+            )
+            legacy_value = str((await self.session.execute(legacy_stmt)).scalars().first() or "").strip()
+            if not legacy_value:
+                return
+
+            if setting is None:
+                self.session.add(
+                    SystemSetting(key=key, value=legacy_value, description="重发货触发关键字")
+                )
+            else:
+                setting.value = legacy_value
+            await self.session.commit()
+            logger.info("已将旧版个人设置中的重发货触发关键字迁移到系统设置")
+        except Exception as exc:
+            await self.rollback()
+            logger.opt(exception=exc).error(
+                "迁移重发货触发关键字失败：exception_type={} exception={}",
+                type(exc).__name__,
+                exc,
+            )
 
     async def list_settings(self, include_sensitive: bool = False) -> dict[str, str]:
         await self.ensure_default_settings()

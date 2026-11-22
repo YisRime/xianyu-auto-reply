@@ -100,7 +100,7 @@ def _check_token_api_domain(url: str) -> Optional[ApiResponse]:
         if domain in lowered:
             return ApiResponse(
                 success=False,
-                message=f"该URL（{domain}）请到「个人设置 → 远程URL配置 → Token获取方式」中填写",
+                message=f"该URL（{domain}）是 Token 获取接口地址，不能作为过滑块远程服务地址",
             )
     return None
 

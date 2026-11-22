@@ -94,7 +94,9 @@ async def lifespan(app: FastAPI):
     try:
         await init_database()
         async with async_session_maker() as session:
-            await SystemSettingService(session).ensure_default_settings()
+            system_setting_service = SystemSettingService(session)
+            await system_setting_service.ensure_default_settings()
+            await system_setting_service.migrate_legacy_redelivery_keyword()
     except Exception:
         logger.exception("数据库初始化失败，服务退出")
         try:

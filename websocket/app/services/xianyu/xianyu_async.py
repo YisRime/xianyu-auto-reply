@@ -733,9 +733,8 @@ class XianyuAsync:
                     if send_user_id == myid and send_message:
                         try:
                             from common.db.compat import db_manager
-                            redelivery_keyword = db_manager.get_user_setting_by_cookie_id(
-                                self.cookie_id, 'redelivery_trigger_keyword'
-                            )
+                            # 全局系统设置（旧版本为用户个人设置，db_manager 内部已兼容）
+                            redelivery_keyword = db_manager.get_redelivery_trigger_keyword()
                             if redelivery_keyword:
                                 redelivery_keyword = redelivery_keyword.strip()
                                 if redelivery_keyword and redelivery_keyword in send_message:

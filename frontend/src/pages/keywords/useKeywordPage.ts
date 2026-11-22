@@ -267,11 +267,11 @@ export function useKeywordPage() {
           getUserSetting('location_chat.remote_secret_key'),
         ])
         if (!urlResult.value?.trim() || !secretResult.value?.trim()) {
-          addToast({ type: 'warning', message: '请先到个人设置的远程URL配置中填写位置聊天配置的远程URL和秘钥' })
+          addToast({ type: 'warning', message: '请先配置位置聊天的远程URL和秘钥后再使用外部联系方式回复' })
           return
         }
       } catch {
-        addToast({ type: 'error', message: '无法读取个人设置，请先配置位置聊天远程URL和秘钥' })
+        addToast({ type: 'error', message: '无法读取位置聊天远程配置，请先填写远程URL和秘钥' })
         return
       }
 

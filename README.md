@@ -609,7 +609,7 @@ Vite 开发/预览环境和桌面启动器会识别公开接口的百分号编�
 
 ### 个人 Token 远程配置
 
-在「个人设置 → 远程URL配置 → Token获取方式」填写远程 URL 和秘钥，支持独立测试、保存及重新读取。秘钥请到 https://api.xianyushop.shop 获取，使用接口列表中的“闲鱼获取Token”接口。测试与「系统设置 → 基础设置 → Token获取方式」共用连通性校验，使用空 Cookie，不保存输入内容。
+用户系统已移除，不再提供「个人设置」页面入口；远程 URL 和秘钥直接写入 `xy_user_settings` 表的 `token.remote_url`、`token.remote_secret_key`。秘钥请到 https://api.xianyushop.shop 获取，使用接口列表中的“闲鱼获取Token”接口。
 
 配置按当前登录用户存入现有 `xy_user_settings` 表的 `token.remote_url`、`token.remote_secret_key`，两个配置项在同一事务中保存，无需新增表、字段或初始化数据。
 

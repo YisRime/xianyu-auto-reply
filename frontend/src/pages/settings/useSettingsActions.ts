@@ -158,22 +158,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     })
   }, [addToast, getSettings, run])
 
-  const saveUserExpiry = useCallback(async () => {
-    const settings = getSettings()
-    if (!settings) return
-    const price = String(settings['user.renew_month_price'] ?? '').trim()
-    const days = String(settings['user.register_default_days'] ?? '').trim()
-    if (price && (!/^\d+(\.\d{1,2})?$/.test(price) || Number(price) <= 0)) {
-      addToast({ type: 'error', message: '续期单价必须为大于0的数字（最多两位小数）' })
-      return
-    }
-    if (days && (!/^\d+$/.test(days) || Number(days) <= 0)) {
-      addToast({ type: 'error', message: '注册默认天数必须为正整数' })
-      return
-    }
-    await run('expiry', async () => { await persist({ 'user.renew_month_price': price, 'user.register_default_days': days }, '用户到期设置保存成功', '用户到期设置保存失败') })
-  }, [addToast, getSettings, persist, run])
-
   const saveProxy = useCallback(async () => {
     const settings = getSettings()
     if (!settings) return
@@ -218,7 +202,6 @@ export function useSettingsActions(getSettings: SettingsGetter) {
     savePayment,
     saveWithdraw,
     saveDistribution,
-    saveUserExpiry,
     saveProxy,
     saveHiddenMenus,
     saveLoginBranding: (settings: LoginBrandingSettings) => saveSpecial('branding', () => updateLoginBrandingSettings({ ...settings }), '登录品牌设置保存成功', '登录品牌设置保存失败'),

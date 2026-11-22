@@ -32,7 +32,6 @@ import {
   Tags,
   Ticket,
   Timer,
-  UserCog,
   Users,
 } from 'lucide-react'
 
@@ -117,7 +116,6 @@ export const mainNavItems: NavEntry[] = [
   { key: 'notification-channels', icon: Bell, label: '通知渠道', path: '/notification-channels' },
   { key: 'message-notifications', icon: MessageCircle, label: '消息通知', path: '/message-notifications' },
   { key: 'blacklist', icon: Ban, label: '黑名单管理', path: '/blacklist' },
-  { key: 'personal-settings', icon: UserCog, label: '个人设置', path: '/personal-settings' },
 ]
 
 export const adminNavItems: NavEntry[] = [

@@ -181,9 +181,7 @@ export function Settings() {
       {activeTab === 'user' && <UserNetworkSettingsTab
         settings={settings}
         setSettings={setSettings}
-        userExpirySaving={actions.saving('expiry')}
         proxySaving={actions.saving('proxy')}
-        onUserExpirySave={() => void actions.saveUserExpiry()}
         onProxySave={() => void actions.saveProxy()}
       />}
 

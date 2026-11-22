@@ -218,7 +218,7 @@ export function RiskLogs() {
     if (!tokenApiDomain) return false
     addToast({
       type: 'error',
-      message: `该URL（${tokenApiDomain}）请到「个人设置 → 远程URL配置 → Token获取方式」中填写`,
+      message: `该URL（${tokenApiDomain}）是 Token 获取接口地址，不能作为过滑块远程服务地址`,
     })
     return true
   }
@@ -381,13 +381,6 @@ export function RiskLogs() {
 
   return (
     <div className="space-y-4">
-      {/* 顶部红字提示：滑块验证无法通过或账号持续离线时，引导用户填写个人 Token 远程配置 */}
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
-        <p className="text-sm font-medium text-red-600 dark:text-red-400">
-          如遇滑块验证无法通过或者账号管理在线状态一直离线的场景，可到「个人设置 → 远程URL配置 → Token获取方式」填写远程URL和秘钥，测试通过后保存。
-        </p>
-      </div>
-
       {/* 远程过滑块全局配置（仅管理员可见可操作） */}
       {user?.is_admin && (
       <div className="vben-card">
@@ -445,7 +438,7 @@ export function RiskLogs() {
             <Info className="w-4 h-4 mt-0.5 shrink-0 text-blue-500 dark:text-blue-400" />
             <div className="text-xs leading-relaxed text-blue-700 dark:text-blue-300 space-y-0.5">
               <p>填写 <span className="font-medium">https://xy-api.zhinianboke.com/api/v1/captcha/slider-solve</span> 使用远程服务过滑块验证，提高成功率。</p>
-              <p>秘钥请在 <span className="font-medium">xy.zhinianboke.com</span> 注册账号后，于个人设置中获取，测试返回[punish 链接不能为空]，代表成功。</p>
+              <p>秘钥请在 <span className="font-medium">xy.zhinianboke.com</span> 注册账号后，于该平台个人中心获取，测试返回[punish 链接不能为空]，代表成功。</p>
             </div>
           </div>
           <div className="flex flex-wrap items-end gap-4">
@@ -465,7 +458,7 @@ export function RiskLogs() {
                 type="text"
                 value={remoteSecret}
                 onChange={(e) => setRemoteSecret(e.target.value)}
-                placeholder="个人设置中的秘钥"
+                placeholder="上游平台生成的秘钥"
                 className="input-ios"
               />
             </div>

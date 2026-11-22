@@ -325,6 +325,8 @@ export interface SystemSettings {
   // 代理设置
   'proxy.api_url'?: string
   'proxy.enabled'?: boolean
+  // 重发货触发关键字（全局系统设置，原个人设置迁移而来）
+  redelivery_trigger_keyword?: string
   // 用户到期/续期设置
   'user.renew_month_price'?: string
   'user.register_default_days'?: string

@@ -28,7 +28,6 @@ const ItemSearch = React.lazy(() => import('@/pages/search/ItemSearch').then(m =
 const GoofishCompass = React.lazy(() => import('@/pages/compass/GoofishCompass').then(m => ({ default: m.GoofishCompass })))
 const GoofishScheduledCrawler = React.lazy(() => import('@/pages/crawler/GoofishScheduledCrawler').then(m => ({ default: m.GoofishScheduledCrawler })))
 const Cards = React.lazy(() => import('@/pages/cards/Cards').then(m => ({ default: m.Cards })))
-const PersonalSettings = React.lazy(() => import('@/pages/personalSettings/PersonalSettings').then(m => ({ default: m.PersonalSettings })))
 const Blacklist = React.lazy(() => import('@/pages/blacklist/Blacklist'))
 
 // 共享多人扫码登录
@@ -322,7 +321,6 @@ function App() {
             <Route path="product-monitor/items" element={<MonitorItems />} />
             <Route path="product-monitor/order-fallback-accounts" element={<OrderFallbackAccount />} />
             <Route path="product-monitor/collect-fallback-accounts" element={<CollectFallbackAccount />} />
-            <Route path="personal-settings" element={<PersonalSettings />} />
             <Route path="blacklist" element={<Blacklist />} />
             <Route path="settings" element={<Settings />} />
             {/* 共享多人扫码登录管理端 */}

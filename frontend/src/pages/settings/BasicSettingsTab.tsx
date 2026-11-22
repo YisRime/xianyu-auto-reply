@@ -5,6 +5,7 @@ import { getExeForcedHiddenMenuKeys } from '@/config/navigation'
 import { getHiddenMenuKeysFromSettings } from '@/api/settings'
 import type { SystemSettings } from '@/types'
 import { MenuVisibilitySettings } from './MenuVisibilitySettings'
+import { RedeliveryKeywordSetting } from './RedeliveryKeywordSetting'
 import { SliderModeSetting } from './SliderModeSetting'
 import type { SetSystemSettings } from './settingsTypes'
 
@@ -95,6 +96,10 @@ export function BasicSettingsTab({
           </div>
         </div>
       </div>
+      <RedeliveryKeywordSetting
+        value={settings?.redelivery_trigger_keyword}
+        onSaved={(keyword) => setSettings((current) => current ? { ...current, redelivery_trigger_keyword: keyword } : current)}
+      />
       <MenuVisibilitySettings
         hiddenMenuKeys={getHiddenMenuKeysFromSettings(settings)}
         onChange={onHiddenMenusChange}

@@ -365,6 +365,35 @@ class DBManagerCompat:
                 return setting_result.scalar_one_or_none()
         return self._run_async(_query)
 
+    def get_redelivery_trigger_keyword(self) -> Optional[str]:
+        """读取全局「重发货触发关键字」。
+
+        该配置旧版本按用户保存在 xy_user_settings，用户系统移除后改为
+        xy_system_settings 全局配置；系统设置为空时回退读取旧记录，
+        保证升级前的配置仍然生效。
+
+        Returns:
+            去除首尾空白后的关键字；未配置时返回空字符串或 None。
+        """
+        async def _query(session_maker):
+            async with session_maker() as session:
+                setting_stmt = select(SystemSetting.value).where(
+                    SystemSetting.key == 'redelivery_trigger_keyword'
+                )
+                value = (await session.execute(setting_stmt)).scalar_one_or_none()
+                if value and value.strip():
+                    return value.strip()
+                # 兼容旧版本：按用户存储的记录仍然生效
+                legacy_stmt = select(UserSetting.value).where(
+                    UserSetting.key == 'redelivery_trigger_keyword',
+                    UserSetting.value != '',
+                ).limit(1)
+                legacy_value = (await session.execute(legacy_stmt)).scalars().first()
+                if legacy_value and legacy_value.strip():
+                    return legacy_value.strip()
+                return value
+        return self._run_async(_query)
+
     def update_cookie_account_info(self, cookie_id: str, **kwargs) -> bool:
         """更新账号信息"""
         async def _update(session_maker):

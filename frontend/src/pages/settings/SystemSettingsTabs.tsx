@@ -9,7 +9,7 @@ const TABS: Array<[SettingsTab, string]> = [
   ['basic', '基础与认证'],
   ['contact', '邮件与联系'],
   ['appearance', '界面与文案'],
-  ['user', '用户与网络'],
+  ['user', '网络与代理'],
   ['runtime', '运行维护'],
 ]
 

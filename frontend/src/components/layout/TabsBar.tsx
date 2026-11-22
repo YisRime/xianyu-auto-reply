@@ -66,7 +66,6 @@ const routeTitles: Record<string, string> = {
   '/admin/announcements': '公告管理',
   '/admin/ad-manage': '广告管理',
   '/about': '关于',
-  '/personal-settings': '个人设置',
   '/cards': '卡券管理',
   '/distribution/supply': '货源广场',
   '/distribution/card-pickup': '分销卡券',

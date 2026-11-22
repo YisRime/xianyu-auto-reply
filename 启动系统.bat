@@ -11,9 +11,9 @@ echo ============================================
 echo    闲鱼自动回复系统 - 一键启动
 echo ============================================
 echo.
-echo [1/4] 启动 MySQL ...
-start "xianyu-mysql" /min /d "%ROOT%\runtime\mysql\bin" "%ROOT%\runtime\mysql\bin\mysqld.exe" --defaults-file="%ROOT%\runtime\my.ini" --console
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 3306 -TimeoutSec 90 >nul
+echo [1/4] 启动 MariaDB ...
+start "xianyu-db" /min /d "%ROOT%\runtime\mariadb\bin" "%ROOT%\runtime\mariadb\bin\mariadbd.exe" --defaults-file="%ROOT%\runtime\my-mariadb.ini" --console
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 3306 -TimeoutSec 120 >nul
 echo [2/4] 启动 Backend-Web (含前端页面) ...
 start "xianyu-backend-web" /min /d "%ROOT%\backend-web" ".venv\Scripts\python.exe" main.py
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8089 -TimeoutSec 240 >nul

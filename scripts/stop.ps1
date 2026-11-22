@@ -1,5 +1,5 @@
 $current = $PID
-$names = @('python.exe','pythonw.exe','node.exe','mysqld.exe','GarnetServer.exe','cmd.exe')
+$names = @('python.exe','pythonw.exe','node.exe','mysqld.exe','mariadbd.exe','cmd.exe')
 Get-CimInstance Win32_Process | Where-Object {
   $_.ProcessId -ne $current -and $names -contains $_.Name -and $_.CommandLine -ne $null -and
   $_.CommandLine -like '*xianyu-auto-reply*'

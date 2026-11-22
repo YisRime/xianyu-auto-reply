@@ -24,4 +24,6 @@ data
 logs
 frontend/node_modules
 frontend/dist
+__pycache__
+*.pyc
 backend-web/static/uploads

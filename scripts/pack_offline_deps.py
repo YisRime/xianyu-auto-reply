@@ -2,7 +2,7 @@
 离线依赖打包脚本 - 在联网机器上运行
 
 功能:
-    1. 从所有 pyproject.toml 中提取依赖
+    1. 从 requirements.txt 中读取依赖
     2. 去重合并生成 requirements_all.txt
     3. 使用 pip download 下载所有 wheel 包到 offline_packages 目录
     4. 在输出目录中生成离线安装脚本 install.bat
@@ -29,13 +29,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 OUTPUT_DIR = PROJECT_ROOT / "offline_packages"
 
-# 所有 pyproject.toml 文件路径（相对于项目根目录）
-PYPROJECT_FILES = [
-    "backend-web/pyproject.toml",
-    "websocket/pyproject.toml",
-    "scheduler/pyproject.toml",
-    "promotion/backend/pyproject.toml",
-]
+# 统一依赖清单（三份 pyproject 已合并到此文件）
+REQUIREMENTS_FILE = "requirements.txt"
 
 # 额外需要包含的依赖（编译工具等）
 # 说明：部分包（pyautogui/pyscreeze/pytweening）在 PyPI 上只有源码包(.tar.gz)，
@@ -93,24 +88,44 @@ def normalize_dep_name(dep_str):
     return name.strip().lower()
 
 
+def extract_deps_from_requirements(req_path):
+    """
+    从 requirements.txt 中提取依赖列表，忽略注释与空行
+
+    Args:
+        req_path: requirements.txt 文件路径
+
+    Returns:
+        依赖字符串列表
+    """
+    try:
+        deps = []
+        with open(req_path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                deps.append(line)
+        return deps
+    except Exception as e:
+        print(f"  [警告] 读取 {req_path} 失败: {e}")
+        return []
+
+
 def merge_dependencies():
     """
-    从所有 pyproject.toml 提取并合并依赖，去重
+    从 requirements.txt 提取并合并依赖，去重
 
     Returns:
         去重后的依赖列表
     """
     all_deps = {}  # {包名小写: 原始依赖字符串}
 
-    for rel_path in PYPROJECT_FILES:
-        toml_path = PROJECT_ROOT / rel_path
-        if not toml_path.exists():
-            print(f"  [跳过] {rel_path} 不存在")
-            continue
+    req_path = PROJECT_ROOT / REQUIREMENTS_FILE
+    deps = extract_deps_from_requirements(req_path)
+    print(f"  {REQUIREMENTS_FILE}: {len(deps)} 个依赖")
 
-        deps = extract_deps_from_toml(toml_path)
-        print(f"  {rel_path}: {len(deps)} 个依赖")
-
+    if True:
         for dep in deps:
             name = normalize_dep_name(dep)
             # 保留版本号更高的那个（简单处理：后出现的覆盖前面的）

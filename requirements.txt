@@ -1,0 +1,57 @@
+# 闲鱼自动回复系统 - 运行时依赖
+# 由 backend-web / websocket / scheduler 三份 pyproject 合并而来（去重 + 取最严格版本约束）。
+
+# --- Web 框架 ---
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.6
+email-validator>=2.1.0
+
+# --- 数据库 ---
+sqlalchemy>=2.0.0
+asyncmy>=0.2.9
+pymysql>=1.1.0
+aiosqlite>=0.22.1
+
+# --- HTTP / 网络 ---
+aiohttp>=3.9.0
+aiohttp-socks>=0.8.0
+websockets==12.0
+python-socks[asyncio]>=2.0.0
+httpx>=0.25.0
+requests>=2.31.0
+anyio>=4.0.0
+sniffio>=1.3.0
+httpcore>=1.0.0
+h11>=0.14.0
+certifi>=2023.11.0
+idna>=3.6
+
+# --- 浏览器自动化 ---
+playwright
+patchright>=1.61.0
+DrissionPage>=4.0.0
+
+# --- 认证 / 加密 ---
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==5.0.0
+pycryptodome>=3.19.0
+
+# --- 任务调度 ---
+apscheduler>=3.10.0
+
+# --- 图像 / 文档处理 ---
+pillow>=10.0.0
+opencv-python-headless>=4.10.0
+qrcode[pil]>=7.4.0
+openpyxl>=3.1.0
+
+# --- 其它 ---
+loguru>=0.7.2
+python-dateutil>=2.8.0
+click>=8.1.0
+openai>=1.0.0
+pyautogui>=0.9.54; sys_platform == 'win32'

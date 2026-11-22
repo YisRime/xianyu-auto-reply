@@ -30,8 +30,10 @@ certifi>=2023.11.0
 idna>=3.6
 
 # --- 浏览器自动化 ---
-playwright
-patchright>=1.61.0
+# 两者必须同属 1.64 线：这样 chromium / chromium-headless-shell 的 revision 都是 1248，
+# 只下载一份浏览器，playwright 与 patchright 共用（1.65 线是 1255，会不一致）
+playwright==1.64.1
+patchright==1.64.4
 DrissionPage>=4.0.0
 
 # --- 认证 / 加密 ---

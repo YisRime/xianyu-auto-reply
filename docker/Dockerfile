@@ -43,8 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && apt-get purge -y --auto-remove gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* /root/.cache /app/requirements.txt
 
-# 只安装一份 Chrome（chromium + headless shell）：patchright 的安装 + 系统依赖，
-# playwright 期望的 revision 目录由下面的软链指向同一份文件
+# playwright 与 patchright 锁在同一版本线（1.64），两者期望的 chromium revision 都是 1248，
+# 所以这里只会下载一份 chromium + 一份 headless shell，两边直接共用，无需额外的目录处理。
 RUN python -m patchright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 

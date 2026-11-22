@@ -8,18 +8,18 @@ set "PATCHRIGHT_BROWSERS_PATH=%ROOT%\runtime\browsers"
 if not exist "%ROOT%\logs" mkdir "%ROOT%\logs"
 title 闲鱼自动回复系统
 echo ============================================
-echo    闲鱼自动回复系统 - 一键启动
+echo    闲鱼自动回复系统 - 一键启动（后台运行）
 echo ============================================
 echo.
 echo [1/4] 启动 MariaDB ...
-start "xianyu-db" /min /d "%ROOT%\runtime\mariadb\bin" "%ROOT%\runtime\mariadb\bin\mariadbd.exe" --defaults-file="%ROOT%\runtime\my-mariadb.ini" --console
+powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\runtime\mariadb\bin\mariadbd.exe' -ArgumentList '--defaults-file=%ROOT%\runtime\my-mariadb.ini','--console' -WorkingDirectory '%ROOT%\runtime\mariadb\bin' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\mariadb-console.log' -RedirectStandardError '%ROOT%\logs\mariadb-console.err.log'"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 3306 -TimeoutSec 120 >nul
 echo [2/4] 启动 Backend-Web (含前端页面) ...
-start "xianyu-backend-web" /min /d "%ROOT%\backend-web" ".venv\Scripts\python.exe" main.py
+powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\backend-web' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\backend-web.out.log' -RedirectStandardError '%ROOT%\logs\backend-web.err.log'"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8089 -TimeoutSec 240 >nul
 echo [3/4] 启动 WebSocket / Scheduler ...
-start "xianyu-websocket" /min /d "%ROOT%\websocket" ".venv\Scripts\python.exe" main.py
-start "xianyu-scheduler" /min /d "%ROOT%\scheduler" ".venv\Scripts\python.exe" main.py
+powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\websocket' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\websocket.out.log' -RedirectStandardError '%ROOT%\logs\websocket.err.log'"
+powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\scheduler' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\scheduler.out.log' -RedirectStandardError '%ROOT%\logs\scheduler.err.log'"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8090 -TimeoutSec 120 >nul
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8091 -TimeoutSec 120 >nul
 echo [4/4] 打开管理后台 ...
@@ -28,7 +28,8 @@ echo.
 echo --------------------------------------------------
 echo  管理后台: http://127.0.0.1:8089
 echo  默认账号: admin / admin123
+echo  服务在后台运行，无窗口；日志见 logs\ 目录
 echo  停止服务: 双击 停止系统.bat
 echo --------------------------------------------------
-timeout /t 8 /nobreak >nul
+timeout /t 10 /nobreak >nul
 exit

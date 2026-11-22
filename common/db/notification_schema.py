@@ -45,6 +45,11 @@ NOTIFICATION_INDEXES = (
 
 
 async def ensure_notification_schema(conn: AsyncConnection) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """幂等补齐通知模块关键字段和邮件字典，失败时向启动入口抛出异常。
 
     Args:
@@ -129,6 +134,11 @@ async def ensure_notification_schema(conn: AsyncConnection) -> None:
 
 
 async def ensure_monitor_email_operation(conn: AsyncConnection) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """补齐上新监控邮件字典项，重复执行时保留已有配置。
 
     Args:

@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import quote_plus
 
 from pydantic import Field
@@ -46,6 +47,10 @@ class BaseConfig(BaseSettings):
     mysql_database: str = Field(default="xianyu_data")
     sync_driver: str = Field(default="mysql+pymysql")
     async_driver: str = Field(default="mysql+asyncmy")
+
+    # 数据库类型：mysql（默认）或 sqlite；sqlite 模式下不再需要独立数据库服务
+    db_engine: str = Field(default="mysql", alias="DB_ENGINE")
+    sqlite_path: str = Field(default="data/xianyu.db", alias="SQLITE_PATH")
 
     # 数据库连接池配置（账号数量较大时可通过环境变量调优）
     # MySQL max_connections 必须大于所有服务进程的连接峰值总和并预留管理连接。
@@ -132,8 +137,23 @@ class BaseConfig(BaseSettings):
     # 真实鼠标方式仅适用于有图形桌面的 Windows 环境。
 
     @property
+    def is_sqlite(self) -> bool:
+        """当前是否使用 SQLite 作为数据库。"""
+        return str(self.db_engine or "").strip().lower() == "sqlite"
+
+    @property
+    def sqlite_file(self) -> Path:
+        """SQLite 数据文件绝对路径（相对路径按项目根目录解析）。"""
+        target = Path(self.sqlite_path)
+        if not target.is_absolute():
+            target = Path(__file__).resolve().parents[2] / target
+        return target
+
+    @property
     def database_url(self) -> str:
         """同步数据库连接URL"""
+        if self.is_sqlite:
+            return f"sqlite:///{self.sqlite_file.as_posix()}"
         password = quote_plus(self.mysql_password)
         host = f"[{self.mysql_host}]" if ":" in self.mysql_host else self.mysql_host
         return f"{self.sync_driver}://{self.mysql_user}:{password}@{host}:{self.mysql_port}/{self.mysql_database}"
@@ -141,6 +161,8 @@ class BaseConfig(BaseSettings):
     @property
     def async_database_url(self) -> str:
         """异步数据库连接URL"""
+        if self.is_sqlite:
+            return f"sqlite+aiosqlite:///{self.sqlite_file.as_posix()}"
         password = quote_plus(self.mysql_password)
         host = f"[{self.mysql_host}]" if ":" in self.mysql_host else self.mysql_host
         return f"{self.async_driver}://{self.mysql_user}:{password}@{host}:{self.mysql_port}/{self.mysql_database}"

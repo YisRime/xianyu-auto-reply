@@ -17,6 +17,11 @@ from common.utils.time_utils import get_beijing_now_naive
 
 
 async def ensure_api_keyword_schema(conn: AsyncConnection) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """补齐API配置结构和字典，升级原始actId文案，保留配置及自定义字典内容。
 
     Args:

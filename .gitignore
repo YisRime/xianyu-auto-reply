@@ -281,3 +281,6 @@ runtime/
 
 # 保留 MariaDB 运行配置（不含二进制与数据）
 !runtime/my-mariadb.ini
+
+# SQLite 数据文件
+data/

@@ -38,6 +38,15 @@ from common.utils.time_utils import get_beijing_now_naive
 from common.utils.security import generate_secret_key, get_password_hash
 
 
+def _sql_text(sql: str):
+    """把 MySQL 专有写法转成当前方言可用写法后再包成 TextClause。"""
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        sql = sql.replace("INSERT IGNORE INTO", "INSERT OR IGNORE INTO")
+    return text(sql)
+
+
 # 建表/改表时的锁等待上限（秒）。MySQL 的 lock_wait_timeout 默认 31536000 秒（一年），
 # 一旦某张表被别的事务或 ALTER 占着元数据锁，DDL 会无限挂住且没有任何日志，
 # 收敛成 30 秒后报错，让启动日志能直接看出是锁冲突。
@@ -2147,8 +2156,62 @@ class DatabaseInitializer:
         ],
     }
 
+    async def init_all_sqlite(self) -> None:
+        """SQLite 初始化：按 ORM 元数据建表，跳过所有 MySQL 方言迁移。"""
+        logger.info("=" * 50)
+        logger.info("开始初始化 SQLite 数据库...")
+        try:
+            await self._create_tables_from_metadata()
+            await self._create_kv_tables()
+            await self.init_data_dictionaries()
+            await self.create_default_admin()
+            await self.init_system_settings()
+            await self.init_scheduled_tasks()
+            await self.init_publish_addresses()
+            await self.init_redis_platform_day()
+            await self.migrate_card_item_relations()
+            await self.migrate_delivery_block_rules()
+            await self.backfill_user_secret_keys()
+            logger.info("SQLite 数据库初始化完成")
+            logger.info("=" * 50)
+        except Exception as e:
+            logger.error(f"SQLite 数据库初始化失败: {e}")
+            raise
+
+    @staticmethod
+    async def _create_tables_from_metadata() -> None:
+        """用 ORM 元数据在 SQLite 上建表。"""
+        import common.models  # noqa: F401  注册全部模型
+        from common.db.base_class import Base
+
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info(f"✓ 已按 ORM 元数据建表，共 {len(Base.metadata.tables)} 张")
+
+    @staticmethod
+    async def _create_kv_tables() -> None:
+        """创建没有 ORM 模型的键值存储与分布式锁表。"""
+        statements = [
+            "CREATE TABLE IF NOT EXISTS xy_kv_store ("
+            "k VARCHAR(255) PRIMARY KEY, v TEXT, expires_at BIGINT, "
+            "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "CREATE INDEX IF NOT EXISTS idx_kv_expires ON xy_kv_store (expires_at)",
+            "CREATE TABLE IF NOT EXISTS xy_distributed_locks ("
+            "lock_name VARCHAR(255) PRIMARY KEY, owner VARCHAR(64) NOT NULL, "
+            "expires_at BIGINT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+        ]
+        async with async_engine.begin() as conn:
+            for sql in statements:
+                await conn.execute(text(sql))
+        logger.info("✓ 键值存储与分布式锁表已就绪")
+
     async def init_all(self):
         """初始化所有数据库内容"""
+        from common.core.config import get_settings
+
+        if get_settings().is_sqlite:
+            await self.init_all_sqlite()
+            return
         try:
             logger.info("=" * 50)
             logger.info("开始初始化数据库...")
@@ -2290,7 +2353,7 @@ class DatabaseInitializer:
         async with ddl_connection() as conn:
             for dict_type, dict_value, dict_label, sort_order in items:
                 await conn.execute(
-                    text(
+                    _sql_text(
                         "INSERT IGNORE INTO xy_data_dictionaries "
                         "(dict_type, dict_value, dict_label, sort_order, enabled) "
                         "VALUES (:dict_type, :dict_value, :dict_label, :sort_order, 1)"
@@ -3698,7 +3761,7 @@ class DatabaseInitializer:
                 for key, value, description in self.DEFAULT_SETTINGS:
                     try:
                         await session.execute(
-                            text("""
+                            _sql_text("""
                                 INSERT IGNORE INTO xy_system_settings (`key`, value, description, updated_at)
                                 VALUES (:key, :value, :description, NOW())
                             """),
@@ -3722,7 +3785,7 @@ class DatabaseInitializer:
                 for task_code, task_name, interval_seconds, enabled, description in self.DEFAULT_SCHEDULED_TASKS:
                     try:
                         await session.execute(
-                            text("""
+                            _sql_text("""
                                 INSERT IGNORE INTO xy_scheduled_tasks 
                                 (task_code, task_name, interval_seconds, enabled, description, created_at, updated_at)
                                 VALUES (:task_code, :task_name, :interval_seconds, :enabled, :description, NOW(), NOW())
@@ -3900,7 +3963,7 @@ class DatabaseInitializer:
                 
                 # 首次迁移：从 xy_cards 导入到关联表
                 migrate_result = await session.execute(
-                    text("""
+                    _sql_text("""
                         INSERT IGNORE INTO xy_card_item_relations (user_id, card_id, item_id, dock_record_id, created_at, updated_at)
                         SELECT user_id, id, item_id, 0, NOW(), NOW()
                         FROM xy_cards
@@ -3963,7 +4026,7 @@ class DatabaseInitializer:
 
                     try:
                         await session.execute(
-                            text("""
+                            _sql_text("""
                                 INSERT IGNORE INTO xy_delivery_block_rules
                                 (account_id, rule_code, enabled, priority, block_reason,
                                  auto_close_order, only_card_after_close, excluded_item_ids, config)

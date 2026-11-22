@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, DateTime, Index, Integer, String, Text, func
-from sqlalchemy.dialects.mysql import LONGTEXT
+from sqlalchemy import Text as LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from common.db.base_class import Base

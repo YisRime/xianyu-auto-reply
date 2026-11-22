@@ -1,4 +1,4 @@
-﻿"""
+"""
 数据库会话配置
 
 提供异步数据库连接和会话管理
@@ -169,18 +169,47 @@ def _compile_sql_with_params(statement, parameters):
 #   降低对远程库的常驻连接数（上千账号大多时间空闲时尤其有用）；
 # - connect_args.connect_timeout：限制 TCP 建连耗时，远程库不可达时快速失败而不是无限阻塞，
 #   从而让连接尽快归还连接池，缓解 "QueuePool limit ... reached" 连接池打满问题。
-async_engine = create_async_engine(
-    settings.async_database_url,
-    echo=False,  # 关闭SQL输出
-    echo_pool=False,  # 不输出连接池日志
-    pool_pre_ping=settings.db_pool_pre_ping,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    pool_timeout=settings.db_pool_timeout,
-    pool_recycle=settings.db_pool_recycle,
-    pool_use_lifo=settings.db_pool_use_lifo,
-    connect_args={"connect_timeout": settings.db_connect_timeout},
-)
+if settings.is_sqlite:
+    # SQLite：单文件数据库，不需要连接池调优参数，只需允许跨线程访问
+    settings.sqlite_file.parent.mkdir(parents=True, exist_ok=True)
+    async_engine = create_async_engine(
+        settings.async_database_url,
+        echo=False,
+        echo_pool=False,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    async_engine = create_async_engine(
+        settings.async_database_url,
+        echo=False,  # 关闭SQL输出
+        echo_pool=False,  # 不输出连接池日志
+        pool_pre_ping=settings.db_pool_pre_ping,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+        pool_recycle=settings.db_pool_recycle,
+        pool_use_lifo=settings.db_pool_use_lifo,
+        connect_args={"connect_timeout": settings.db_connect_timeout},
+    )
+
+
+if settings.is_sqlite:
+
+    @event.listens_for(async_engine.sync_engine, "before_cursor_execute", retval=True)
+    def _rewrite_mysql_dialect_sql(conn, cursor, statement, parameters, context, executemany):
+        """把 MySQL 专有函数改写成 SQLite 等价写法。"""
+        if "NOW()" in statement:
+            statement = statement.replace("NOW()", "CURRENT_TIMESTAMP")
+        return statement, parameters
+
+    @event.listens_for(async_engine.sync_engine, "connect")
+    def _apply_sqlite_pragmas(dbapi_connection, _connection_record):
+        """SQLite 连接建立时开启 WAL 与忙等待，缓解多进程并发写冲突。"""
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=15000")
+        cursor.close()
 
 
 # 监听SQL执行事件，输出完整的SQL（带参数）

@@ -1,4 +1,4 @@
-﻿"""
+"""
 SQLAlchemy基类定义
 
 功能：
@@ -10,8 +10,17 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import DateTime, func
+from sqlalchemy import BigInteger
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+
+
+
+@compiles(BigInteger, "sqlite")
+def _compile_bigint_for_sqlite(type_, compiler, **kw):
+    """SQLite 只有 INTEGER PRIMARY KEY 才会自增，BIGINT 主键需降级为 INTEGER。"""
+    return "INTEGER"
 
 class Base(DeclarativeBase):
     """Base declarative class."""

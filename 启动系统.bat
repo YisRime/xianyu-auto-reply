@@ -11,13 +11,10 @@ echo ============================================
 echo    闲鱼自动回复系统 - 一键启动（后台运行）
 echo ============================================
 echo.
-echo [1/3] 启动 MariaDB ...
-powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\runtime\mariadb\bin\mariadbd.exe' -ArgumentList '--defaults-file=%ROOT%\my-mariadb.ini','--console' -WorkingDirectory '%ROOT%\runtime\mariadb\bin' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\mariadb-console.log' -RedirectStandardError '%ROOT%\logs\mariadb-console.err.log'"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 3306 -TimeoutSec 120 >nul
-echo [2/3] 启动 Backend-Web（含前端页面与定时任务）...
+echo [1/2] 启动 Backend-Web（含前端页面与定时任务）...
 powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\backend-web' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\backend-web.out.log' -RedirectStandardError '%ROOT%\logs\backend-web.err.log'"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8089 -TimeoutSec 240 >nul
-echo [3/3] 启动 WebSocket ...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8089 -TimeoutSec 300 >nul
+echo [2/2] 启动 WebSocket ...
 powershell -NoProfile -Command "Start-Process -FilePath '%ROOT%\.venv\Scripts\python.exe' -ArgumentList 'main.py' -WorkingDirectory '%ROOT%\websocket' -WindowStyle Hidden -RedirectStandardOutput '%ROOT%\logs\websocket.out.log' -RedirectStandardError '%ROOT%\logs\websocket.err.log'"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\wait-port.ps1" -Port 8090 -TimeoutSec 120 >nul
 start "" "http://127.0.0.1:8089"
@@ -25,7 +22,7 @@ echo.
 echo --------------------------------------------------
 echo  管理后台: http://127.0.0.1:8089
 echo  默认账号: admin / admin123
-echo  服务在后台运行，无窗口；日志见 logs\ 目录
+echo  数据文件: data\xianyu.db（SQLite，无需数据库服务）
 echo  停止服务: 双击 停止系统.bat
 echo --------------------------------------------------
 timeout /t 10 /nobreak >nul

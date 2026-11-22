@@ -174,6 +174,11 @@ UNIQUE_INDEX_COLUMNS = {
 
 
 async def ensure_auto_relist_schema(conn, current_time: datetime) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """创建自动续售表并幂等补齐字段、索引和发布日志关联字段。
 
     Args:

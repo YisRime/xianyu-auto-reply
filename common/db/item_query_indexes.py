@@ -73,6 +73,11 @@ def _is_usable_index(parts: list[dict], columns: list[str]) -> bool:
 
 
 async def ensure_item_query_indexes(conn) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """使用已有 DDL 连接补齐商品查询索引。
 
     Args:

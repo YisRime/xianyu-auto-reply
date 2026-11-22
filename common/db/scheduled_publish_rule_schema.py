@@ -166,6 +166,11 @@ async def _index_exists(conn, table_name: str, index_name: str) -> bool:
 
 
 async def ensure_scheduled_publish_rule_schema(conn) -> None:
+    from common.core.config import get_settings
+
+    if get_settings().is_sqlite:
+        # SQLite 的表结构由 ORM 元数据创建，跳过 MySQL 元数据迁移
+        return
     """创建定时发布相关表，并幂等补齐缺失字段和索引。
 
     Args:

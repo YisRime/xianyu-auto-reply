@@ -20,10 +20,22 @@ from typing import Any, AsyncIterator, Optional
 from loguru import logger
 from sqlalchemy import text
 
+from common.core.config import get_settings
 from common.db.session import async_session_maker
 
 KV_TABLE = "xy_kv_store"
 LOCK_TABLE = "xy_distributed_locks"
+
+
+def _is_sqlite() -> bool:
+    """当前是否为 SQLite 方言。"""
+    return get_settings().is_sqlite
+
+
+def _insert_ignore(table: str, columns: str, values: str) -> str:
+    """按方言拼出「插入并忽略主键冲突」的语句。"""
+    keyword = "INSERT OR IGNORE" if _is_sqlite() else "INSERT IGNORE"
+    return f"{keyword} INTO {table}({columns}) VALUES({values})"
 
 
 def _now() -> int:
@@ -119,8 +131,13 @@ class DbKvStore:
                     return False
 
         sql = (
-            f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, :v, :exp) "
-            "ON DUPLICATE KEY UPDATE v = :v, expires_at = :exp"
+            (
+                f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, :v, :exp) "
+                "ON CONFLICT(k) DO UPDATE SET v = excluded.v, expires_at = excluded.expires_at"
+            ) if _is_sqlite() else (
+                f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, :v, :exp) "
+                "ON DUPLICATE KEY UPDATE v = :v, expires_at = :exp"
+            )
         )
         async with async_session_maker() as session:
             await session.execute(text(sql), payload)
@@ -153,8 +170,13 @@ class DbKvStore:
         async with async_session_maker() as session:
             await session.execute(
                 text(
-                    f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, '1', NULL) "
-                    "ON DUPLICATE KEY UPDATE v = CAST(COALESCE(v, '0') AS SIGNED) + 1"
+                    (
+                        f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, '1', NULL) "
+                        "ON CONFLICT(k) DO UPDATE SET v = CAST(COALESCE(v, '0') AS INTEGER) + 1"
+                    ) if _is_sqlite() else (
+                        f"INSERT INTO {KV_TABLE}(k, v, expires_at) VALUES(:k, '1', NULL) "
+                        "ON DUPLICATE KEY UPDATE v = CAST(COALESCE(v, '0') AS SIGNED) + 1"
+                    )
                 ),
                 {"k": key},
             )
@@ -217,28 +239,39 @@ class DistributedLock:
             await _sleep(0.05)
 
     async def _try_acquire(self) -> bool:
+        """尝试获取锁：先插入占位，再接管已过期的锁（MySQL/SQLite 通用）。"""
         now = _now()
         expires_at = now + int(self.expire)
+        params = {
+            "name": self.lock_name,
+            "owner": self.token,
+            "exp": expires_at,
+            "now": now,
+        }
         try:
             async with async_session_maker() as session:
-                await session.execute(
+                inserted = await session.execute(
                     text(
-                        f"INSERT INTO {LOCK_TABLE}(lock_name, owner, expires_at) "
-                        "VALUES(:name, :owner, :exp) "
-                        "ON DUPLICATE KEY UPDATE "
-                        "owner = IF(expires_at <= :now, VALUES(owner), owner), "
-                        "expires_at = IF(expires_at <= :now, VALUES(expires_at), expires_at)"
+                        _insert_ignore(
+                            LOCK_TABLE,
+                            "lock_name, owner, expires_at",
+                            ":name, :owner, :exp",
+                        )
                     ),
-                    {"name": self.lock_name, "owner": self.token, "exp": expires_at, "now": now},
+                    params,
                 )
-                row = (
-                    await session.execute(
-                        text(f"SELECT owner FROM {LOCK_TABLE} WHERE lock_name = :name"),
-                        {"name": self.lock_name},
-                    )
-                ).first()
                 await session.commit()
-            return bool(row) and row[0] == self.token
+                if (inserted.rowcount or 0) == 1:
+                    return True
+                taken = await session.execute(
+                    text(
+                        f"UPDATE {LOCK_TABLE} SET owner = :owner, expires_at = :exp "
+                        "WHERE lock_name = :name AND expires_at <= :now"
+                    ),
+                    params,
+                )
+                await session.commit()
+                return (taken.rowcount or 0) == 1
         except Exception as exc:  # noqa: BLE001 - 锁不可用时由调用方降级
             logger.warning(f"获取分布式锁失败[{self.lock_name}]: {type(exc).__name__}: {exc}")
             return False
